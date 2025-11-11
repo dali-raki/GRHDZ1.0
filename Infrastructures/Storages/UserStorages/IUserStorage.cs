@@ -1,5 +1,4 @@
-﻿using Infrastructures.Domains.Models;
-
+﻿using GrhDz.Domains.Models.Users;
 
 namespace Infrastructures.Storages.UserStorages
 {

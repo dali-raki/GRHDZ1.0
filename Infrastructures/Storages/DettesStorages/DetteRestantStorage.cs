@@ -1,11 +1,11 @@
-﻿using GestionPersonnel.Models.Dettes;
+﻿using GrhDz.Domains.Models.Dettes;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace GestionPersonnel.Storages.DettesStorages
+namespace Infrastructures.Storages.DettesStorages
 {
-    public class DetteRestantStorage
+    public class DetteRestantStorage : IDetteRestantStorage
     {
         private readonly string _connectionString;
 
@@ -120,7 +120,7 @@ namespace GestionPersonnel.Storages.DettesStorages
 
         public async Task Add(DetteRestant detteRestant)
         {
-            if ((await ExisteDettePourEmploye(detteRestant.EmployeId)))
+            if (await ExisteDettePourEmploye(detteRestant.EmployeId))
             {
                 var detteRestants2 = new DetteRestant();
                 detteRestants2 = await GetById2(detteRestant.EmployeId);

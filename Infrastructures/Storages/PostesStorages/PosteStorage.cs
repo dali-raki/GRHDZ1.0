@@ -1,13 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
+﻿using GrhDz.Domains.Models.EquipePost;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using Infrastructures.Domains.Models.EquipePost;
 
-namespace GestionPersonnel.Storages.Storages.PostesStorages
+namespace Infrastructures.Storages.PostesStorages
 {
-    public class PosteStorage
+    public class PosteStorage: IPosteStorage
     {
         private readonly string _connectionString;
 
@@ -16,47 +14,15 @@ namespace GestionPersonnel.Storages.Storages.PostesStorages
             _connectionString = configuration.GetConnectionString("DBConnection");
         }
 
-
-        public async Task InsererDonneesPoste(string idPoste, int idEquipe, DateTime date, List<int> idEmployes)
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync();
-
-                
-                string insertPosteCompleteQuery = @"
+        private const string insertPosteCompleteQuery = @"
             INSERT INTO [db_aa9d4f_gestionpersonnel].[dbo].[PosteComplete] ([IdPoste], [IdEquipe], [Date])
             VALUES (@IdPoste, @IdEquipe, @Date);
             SELECT SCOPE_IDENTITY();";
-
-                int idPosteComplete;
-                using (SqlCommand command = new SqlCommand(insertPosteCompleteQuery, connection))
-                {
-                    command.Parameters.AddWithValue("@IdPoste", idPoste);
-                    command.Parameters.AddWithValue("@IdEquipe", idEquipe);
-                    command.Parameters.AddWithValue("@Date", date);
-
-                    idPosteComplete = Convert.ToInt32(await command.ExecuteScalarAsync());
-                }
-
-               
-                string insertEmployePosteQuery = @"
+        private const string insertEmployePosteQuery = @"
             INSERT INTO [db_aa9d4f_gestionpersonnel].[dbo].[EmployePoste] ([IdEmploye], [Date],[EquipeID])
             VALUES (@IdEmploye, @Date,@EquipeID);";
 
-                foreach (int idEmploye in idEmployes)
-                {
-                    using (SqlCommand command = new SqlCommand(insertEmployePosteQuery, connection))
-                    {
-                        command.Parameters.AddWithValue("@IdEmploye", idEmploye);
-                        command.Parameters.AddWithValue("@Date", date);
-                        command.Parameters.AddWithValue("@EquipeID", idEquipe);
-                        await command.ExecuteNonQueryAsync();
-                    }
-                }
-
-                
-                string updateOrInsertTotalePostesQuery = @"
+        private const string updateOrInsertTotalePostesQuery = @"
             MERGE [db_aa9d4f_gestionpersonnel].[dbo].[TotalePostes] AS target
             USING (
                 SELECT [IdEmploye], COUNT(*) AS TotalePostes
@@ -72,6 +38,43 @@ namespace GestionPersonnel.Storages.Storages.PostesStorages
             WHEN NOT MATCHED THEN
                 INSERT (IdEmploye, [Date], TotalePostes)
                 VALUES (source.IdEmploye, DATEFROMPARTS(@Year, @Month,1), source.TotalePostes);";
+        public async Task InsererDonneesPoste(string idPoste, int idEquipe, DateTime date, List<int> idEmployes)
+        {
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                
+            
+
+                int idPosteComplete;
+                await using (SqlCommand command = new SqlCommand(insertPosteCompleteQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@IdPoste", idPoste);
+                    command.Parameters.AddWithValue("@IdEquipe", idEquipe);
+                    command.Parameters.AddWithValue("@Date", date);
+
+                    idPosteComplete = Convert.ToInt32(await command.ExecuteScalarAsync());
+                }
+
+
+
+             
+
+                foreach (int idEmploye in idEmployes)
+                {
+                    await using (SqlCommand command = new SqlCommand(insertEmployePosteQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@IdEmploye", idEmploye);
+                        command.Parameters.AddWithValue("@Date", date);
+                        command.Parameters.AddWithValue("@EquipeID", idEquipe);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+
+
+
+              
 
                 using (SqlCommand command = new SqlCommand(updateOrInsertTotalePostesQuery, connection))
                 {
@@ -87,17 +90,17 @@ namespace GestionPersonnel.Storages.Storages.PostesStorages
             var employePosts = new List<EmployePosts>();
             EquipeSalaires equipeSalaires = null;
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                using (SqlCommand command = new SqlCommand("GetEquipeSalairesAndPostes", connection))
+                await using (SqlCommand command = new SqlCommand("GetEquipeSalairesAndPostes", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@EquipeID", equipeId);
                     command.Parameters.AddWithValue("@Date", date);
 
-                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    await using (SqlDataReader reader = await command.ExecuteReaderAsync())
                     {
                  
                         while (await reader.ReadAsync())

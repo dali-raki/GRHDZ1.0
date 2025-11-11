@@ -1,16 +1,9 @@
-using DocumentFormat.OpenXml.Spreadsheet;
 using Gestion_personal.Components.Models.Login;
-using Gestion_personal.Services;
-using GestionPersonnel.Services;
-using Implementation.Services.Logs;
-using Infrastructures.Domains.Models;
-using Infrastructures.Domains.Models.Logs;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+
+using GrhDz.Domains.Models.Logs;
+using Implementation.Services.LogsAction;
+using Implementation.Services.Users;
 using Microsoft.AspNetCore.Components;
-using System.Security.Claims;
-using static System.Net.WebRequestMethods;
-using UserSession = Infrastructures.Domains.Models.UserSession;
 
 namespace Gestion_personal.Components.Pages
 {
@@ -40,9 +33,9 @@ namespace Gestion_personal.Components.Pages
 
                 if (userInfo != null)
                 {
-                    UserSessionStateService.SetUser(userInfo.UserName!,userInfo.Role!, userInfo.Id);
+                    UserSessionStateService.SetUser(userInfo.UserName!,userInfo.Role!, userInfo.Id.ToString());
                 }
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Login,
                     ActionDate = DateTime.Now,
@@ -55,7 +48,7 @@ namespace Gestion_personal.Components.Pages
             }
             else
             {
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Login,
                     ActionDate = DateTime.Now,

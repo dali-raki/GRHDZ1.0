@@ -1,0 +1,184 @@
+﻿@page "/Dashboard"
+@using GrhDz.Domains.Models.Dashboards
+@using GrhDz.Domains.Models.Employees
+@using GrhDz.Domains.Models.Logs
+@rendermode InteractiveServer
+@if (UserSession.Role == "Admin" || UserSession.Role == "Manager")
+{
+<div class="panel-employe">
+
+
+        <div style="display: flex;justify-content: space-between;align-items: center;">
+            <div style="display:flex;align-items: baseline;">
+                <div style="display: flex;align-items: center;justify-content: center;background-color: #2563eb ;padding:10px;border-radius: 7px;color:white;">
+                    <span class="fa-solid fa-house" style="font-size:22px" aria-hidden="true"></span>
+                </div>
+                <div class="title">
+                    <h1>Dashborad</h1>
+                </div>
+            </div>
+          
+        </div>
+
+        <div class="cards">
+            <CardInfo Number="@Total_Number_Employe" Title="N° d'employés" Icon="fa-solid fa-user" Show="false" />
+            <CardInfo Number="@countEquipe" Title="N° D'equipes" Icon="fa-solid fa-users" Show="false" />
+            <CardInfo Number="@(absenceComparison?.PointageThisMonth ?? 0)" Title="N° d'absences" Icon="fa-solid fa-user-minus" Show="true" Difference="@absencePercentage" />
+            <CardInfo Number="@(presenceComparison?.PointageThisMonth ?? 0)" Title="N° de présences" Icon="fa-solid fa-user-check" Show="true" Difference="@presencePercentage" />
+        </div>
+    <div class="dashboard-content">
+       
+        <div class="graph">
+                <div class="graph1" style="width:100%">
+                    <RadzenCard Style="height:100%; ">
+                    <h3 style="text-align:center;">Dette et avance par mois - @SelectedYear</h3>
+                    <div>
+                        <RadzenChart Style="height:250px; ">
+                            <RadzenCategoryAxis />
+                            <RadzenValueAxis>
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                            <RadzenColumnSeries Data="@DashboardChartData" CategoryProperty="Label" ValueProperty="Dette" Title="Dette" />
+                            <RadzenColumnSeries Data="@DashboardChartData" CategoryProperty="Label" ValueProperty="Avance" Title="Avance" />
+                        </RadzenChart>
+                    </div>
+                </RadzenCard>
+            </div>
+                <div class="graph2" style="width:70%">
+                <RadzenCard>
+                    <h3 style="text-align:center;">Employes par fonction</h3>
+                    <div>
+                      
+                            <RadzenStack Gap="0.5rem" Wrap="FlexWrap.Wrap" >
+                            <div style="display:flex;gap:10px;flex-direction: row-reverse;padding:15px;font-size:1.2rem;">
+                                    <div>
+                                    <RadzenCheckBox @bind-Value="@showDataLabels" Name="dataLabels"></RadzenCheckBox>
+                                    </div>
+                                    <div>
+                                    <RadzenLabel Text="Show Data Labels" Component="dataLabels" />
+                                    </div>
+                                </div>
+                            </RadzenStack>
+                      
+                        <RadzenChart>
+                            <RadzenPieSeries Data="@countfunction" CategoryProperty="Name" ValueProperty="Total" Title="Employees by Function" >
+                                <RadzenSeriesDataLabels Visible="@showDataLabels" />
+                            </RadzenPieSeries>
+                        </RadzenChart>
+                    </div>
+                </RadzenCard>
+            </div>
+        </div>
+    </div>
+  <RadzenCard Style="margin-bottom:2rem;">
+    <RadzenTabs RenderMode="TabRenderMode.Client" @bind-SelectedIndex=@selectedIndex>
+        <Tabs>
+                    <RadzenTabsItem Text="Suivi De Présence">
+                        <div class="pointage-tab">
+                            <div class="option-employe mb-5">
+                                <div class="searchZone w-25">
+
+                                    <div class="input-group ">
+                                        <input type="text" class="form-control" placeholder="Search" @bind="searchTerm" @bind:event="oninput" />
+                                        <input type="date" class="form-control" @bind="selectedDate" />
+                                        <button class="btn-p" type="button" @onclick="() => GetPointageByDate(selectedDate.Year, selectedDate.Month)">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <RadzenDataGrid @ref="grid" Data="@FilteredPointage" TItem="DashboardPointage"
+                                            ShowPagingSummary="true" PageSize="10" AllowPaging="true" AllowSorting="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="DashboardPointage" Property="EmployeID" Title="Id" Width="50px" Filterable=false />
+                                    <RadzenDataGridColumn TItem="DashboardPointage" Property="NomComplet" Title="Full Name" Width="200px" Filterable=false />
+                                    <RadzenDataGridColumn TItem="DashboardPointage" Property="NombrePresences" Title="Presences" Width="110px" Filterable=false />
+                                    <RadzenDataGridColumn TItem="DashboardPointage" Property="NombreAbsences" Title="Absences" Width="110px" Filterable=false />
+                                    <RadzenDataGridColumn TItem="DashboardPointage" Property="NombreHeuresSupp" Title="Overtime" Width="100px" Filterable=false />
+                                </Columns>
+                            </RadzenDataGrid>
+
+                        </div>
+                    </RadzenTabsItem>
+                   
+                @if (UserSession.Role == "Admin")
+                {
+
+                        <RadzenTabsItem Text="Trace Des opérations">
+                        <div class="option-employe mb-5">
+                            <div class="input-group w-25">
+                                    <input type="text" class="form-control" placeholder="Search" @bind-value="searchTerm" @bind-value:event="oninput" />
+                                <button class="btn-p" type="button">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <RadzenDataGrid @ref="grid2" Data="@FilteredLogs" TItem="LogAction"
+                                        ShowPagingSummary="true" PageSize="10"
+                                        AllowPaging="true" AllowSorting="true">
+                            <Columns>
+                                    <RadzenDataGridColumn TItem="LogAction" Property="ActionType" Title="Action" Width="120px" Filterable=false />
+                                    <RadzenDataGridColumn TItem="LogAction" Property="PerformedBy" Title="User" Width="150px" Filterable=false />
+                                    <RadzenDataGridColumn TItem="LogAction" Property="Description" Title="Description" Filterable=false />
+                                <RadzenDataGridColumn TItem="LogAction" Property="ActionDate" Title="Date"
+                                                          Width="180px" Filterable=false>
+                                    <Template Context="log">
+                                        @log.ActionDate.ToString("yyyy-MM-dd HH:mm")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenTabsItem>
+                }
+        </Tabs>
+    </RadzenTabs>
+ </RadzenCard>
+    </div>
+    <SuccessPopup @ref=successTost data="@datapop" />
+
+}
+
+
+<style>
+ 
+    #search {
+        width: 100%;
+    }
+
+    .search-controls {
+        display: flex;
+        padding: 10px;
+        justify-content: flex-end;
+        align-items: baseline;
+        gap: 10px;
+        margin: 10px 0px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+    }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+    .search-input {
+        padding: 8px 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.2s ease;
+    }
+
+        .search-input:focus {
+            border-color: #007bff;
+        }
+
+    </style>

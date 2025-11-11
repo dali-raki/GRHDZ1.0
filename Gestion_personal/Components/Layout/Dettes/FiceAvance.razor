@@ -1,20 +1,12 @@
 ﻿@page "/generate-pdf"
-@using GestionPersonnel.Models.Avances
-@using GestionPersonnel.Services
-@using Implementation.Services.Logs
-@using Infrastructures.Domains.Models.Logs
-@inject IPdfService PdfService
-@inject IAvanceService AvanceService
-@inject IJSRuntime JSRuntime
-@rendermode InteractiveServer
-@inject UserSessionStateService UserSession
+@using GrhDz.Apps.Shared
 @if (IsVisibleFicheAvance)
 {
     <div class="modal" tabindex="-1" style="display: block;">
         <div class="modal-dialog w-100">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Fiche des Avances</h5>
+                    <h5 class="modal-title">Fiche des AvanceModels</h5>
                    
                 </div>
                 <div class="modal-body">
@@ -32,16 +24,16 @@
                                 <thead>
                                     <tr>
                                         <th>Nom Prenom</th>
-                                        <th>Valeur Avances</th>
+                                        <th>Valeur AvanceModels</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if (avances != null && avances.Any())
+                                    @if (avances != null)
                                     {
-                                        @foreach (var avance in avances)
+                                        @foreach (var avance in avances.Value)
                                         {
                                             <tr>
-                                                <td>@avance.NomEmployee @avance.PrenomEmployee</td>
+                                                @* <td>@avance.NomEmployee @avance.PrenomEmployee</td> *@
                                                 <td>@avance.Montant.ToString("0.00") DA</td>
                                             </tr>
                                         }
@@ -83,8 +75,12 @@
 
     [Inject] private ILogsActionService logsActionService { get; set; }
     private DateTime? selectedDate =  DateTime.Now.Date;
-    private List<Avance> avances;
+    private Result<List<AvanceModel>> avances;
     private string media;
+    [Inject] private IPdfService PdfService { get; set; }
+    [Inject] private IAvanceService AvanceService { get; set; }
+    [Inject] public UserSessionStateService UserSession { get; set; }
+    [Inject] IJSRuntime jSRuntime { get; set; }
 
     private void Hide_Popup_FicheAvance()
     {
@@ -92,7 +88,7 @@
     }
     protected override async Task OnInitializedAsync()
     {
-        avances = new List<Avance>();
+        avances = new List<AvanceModel>();
     }
 
     private async Task GetAvances()
@@ -107,19 +103,19 @@
 
     private async Task GeneratePdf()
     {
-        if (selectedDate.HasValue && avances != null && avances.Any())
+        if (selectedDate.HasValue && avances != null)
         {
-            var pdfData = await PdfService.GenerateAvancePdfAsync(avances, selectedDate.Value);
+            var pdfData = await PdfService.GenerateAvancePdfAsync(avances.Value, selectedDate.Value);
 
             // Save or prompt download the PDF
             var fileName = $"Avances_Report_{selectedDate.Value:yyyy-MM-dd}.pdf";
             await SaveFile(pdfData, fileName);
-            var log = new LogActions
+            var log = new LogAction
             {
                 ActionType = ActionType.Insert,
                 ActionDate = DateTime.Now,
                 Description = $"Créer une fiche des avances ",
-                PerformedBy = UserSession.Name,
+                PerformedBy = UserSession.UserName,
             };
             await logsActionService.settLog(log);
         }
@@ -129,7 +125,7 @@
     {
         // Using JSRuntime to trigger file download
         var base64Data = Convert.ToBase64String(fileData);
-        await JSRuntime.InvokeVoidAsync("downloadFile", $"data:application/pdf;base64,{base64Data}", fileName);
+        await jSRuntime.InvokeVoidAsync("downloadFile", $"data:application/pdf;base64,{base64Data}", fileName);
     }
 
   

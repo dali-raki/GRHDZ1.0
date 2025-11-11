@@ -1,12 +1,12 @@
-﻿using GestionPersonnel.Models.Employees;
-using GestionPersonnel.Models.EmplyeeEquipe;
+﻿using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.EmplyeeEquipe;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace GestionPersonnel.Storages.EmployeeEquipeStorages
+namespace Infrastructures.Storages.EmployeesEquipesStorages
 {
-    public class EmployeeEquipeStorage
+    public class EmployeeEquipeStorage : IEmployeeEquipeStorage
     {
         private readonly string _connectionString;
 
@@ -44,7 +44,7 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
         public async Task<List<EmployeeEquipe>> GetAll()
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectAllQuery, connection);
+            await using var cmd = new SqlCommand(SelectAllQuery, connection);
 
             var dataTable = new DataTable();
             var da = new SqlDataAdapter(cmd);
@@ -59,7 +59,7 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
         public async Task<EmployeeEquipe> GetById(int employeeEquipeId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectByIdQuery, connection);
+            await using var cmd = new SqlCommand(SelectByIdQuery, connection);
             cmd.Parameters.AddWithValue("@id", employeeEquipeId);
 
             var dataTable = new DataTable();
@@ -78,7 +78,7 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
         public async Task<int> Add(EmployeeEquipe employeeEquipe)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(InsertQuery, connection);
+            await using var cmd = new SqlCommand(InsertQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeeID", employeeEquipe.EmployeeID);
             cmd.Parameters.AddWithValue("@EquipeeID", employeeEquipe.EquipeeID);
@@ -92,7 +92,7 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
         public async Task AddEmpolyeesEquipe(int equipeId, List<int> employeeIds)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(InsertMultipleQuery, connection);
+            await using var cmd = new SqlCommand(InsertMultipleQuery, connection);
 
             await connection.OpenAsync();
 
@@ -110,7 +110,7 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
         public async Task Update(EmployeeEquipe employeeEquipe)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(UpdateQuery, connection);
+            await using var cmd = new SqlCommand(UpdateQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeeID", employeeEquipe.EmployeeID);
             cmd.Parameters.AddWithValue("@EquipeeID", employeeEquipe.EquipeeID);
@@ -124,16 +124,16 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
         public async Task Delete(int employeeEquipeId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(DeleteQuery, connection);
+            await using var cmd = new SqlCommand(DeleteQuery, connection);
             cmd.Parameters.AddWithValue("@EmployeeEquipeID", employeeEquipeId);
 
             await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task<List<Employee>> GetEmployeesByEquipeId(int equipeId)
+        public async Task<List<Employe>> GetEmployeesByEquipeId(int equipeId)
         {
-            var employees = new List<Employee>();
+            var employees = new List<Employe>();
 
             var query = @"
                 SELECT e.EmployeID, e.Nom, e.Prenom
@@ -141,17 +141,17 @@ namespace GestionPersonnel.Storages.EmployeeEquipeStorages
                 INNER JOIN EmployeEquipes ee ON e.EmployeID = ee.EmployeID
                 WHERE ee.EquipeID = @EquipeID";
 
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(query, connection))
+          await using (var connection = new SqlConnection(_connectionString))
+          await using (var command = new SqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@EquipeID", equipeId);
 
                 await connection.OpenAsync();
-                using (var reader = await command.ExecuteReaderAsync())
+                await using (var reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
-                        var employee = new Employee
+                        var employee = new Employe
                         {
                             EmployeID = reader.GetInt32(reader.GetOrdinal("EmployeID")),
                             Nom = reader.GetString(reader.GetOrdinal("Nom")),

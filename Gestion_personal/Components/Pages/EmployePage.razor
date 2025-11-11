@@ -1,0 +1,184 @@
+﻿@page "/employe"
+@using GrhDz.Domains.Models.Employees
+
+@rendermode InteractiveServer
+
+@if (UserSession.Role == "Admin" || UserSession.Role == "Manager")
+{
+<div class="btn-refresh">
+ 
+</div>
+<div class="panel-employe">
+
+        <div style="display: flex;justify-content: space-between;align-items: center;">
+            <div style="display:flex;align-items: baseline;">
+                <div style="display: flex;align-items: center;justify-content: center;background-color: #2563eb ;padding:10px;border-radius: 7px;color:white;">
+                    <span class="fa-solid fa-user" style="font-size:22px" aria-hidden="true"></span>
+                </div>
+                <div class="title">
+                    <h1>Employe</h1>
+                </div>
+            </div>
+            <div>
+                <div class="option-employe">
+                 
+
+                    <div class="btn-employe">
+                        <button class="btn-p" @onclick="Show_Popup_UpdateFunction"><i class="fa-solid fa-rotate pr-2"></i>Modifier Fonction</button>
+                        <button class="btn-p" @onclick="Show_Popup_AddFunction"><i class="fa-solid fa-plus pr-2"></i>Ajouter Fonction</button>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+
+
+
+       
+   
+   
+   
+   
+   <RadzenTabs RenderMode="TabRenderMode.Client" @bind-SelectedIndex=@selectedIndex>
+       <Tabs>
+           <RadzenTabsItem Text="Employes work">
+               <div class="tab-employe">
+                   <div class="option-employe">
+                       <div class="input-group w-25">
+                           <input type="text" class="form-control" placeholder="Search" @bind-value="searchTerm" @oninput="SearchEmployeesByStatus1" />
+                           <button class="btn-p" type="button">
+                               <i class="fa-solid fa-magnifying-glass"></i>
+                           </button>
+                       </div>
+                   </div>
+
+                        <RadzenDataGrid TItem="Employe" Data="@filteredEmployeesStatus1"
+                                   AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
+                       <Columns>
+                                <RadzenDataGridColumn TItem="Employe" Property="Nom" Title="Nom" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Property="Prenom" Title="Prenom" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Property="FonctionName" Title="Fonction" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Property="NSecuriteSocial" Title="N Securite Sociale" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Title="Option" Width="130px" Filterable=false>
+                               <Template Context="employee">
+                                   <div style="display: flex;align-items: center;justify-content: space-evenly;">
+                                       <button class="btn-p px-3 py-2" @onclick="() => Show_Popup_UpdateEmploye(employee)">
+                                           <i class="fa-solid fa-pen-to-square"></i>
+                                       </button>
+                                       <button class="btn-d px-3 py-2" @onclick="() => ConfirmDelete(employee.EmployeID)">
+                                           <i class="fa-solid fa-trash"></i>
+                                       </button>
+                                   </div>
+
+                               </Template>
+                           </RadzenDataGridColumn>
+                         @*   <<RadzenPager ShowPagingSummary="true" PagingSummaryFormat="@pagingSummaryFormat"
+                                         HorizontalAlign="HorizontalAlign.Right"
+                                         Count="count"
+                                         PageSize="@pageSize" 
+                                         PageNumbersCount="5" 
+                                         PageChanged="@PageChanged" /> *@
+
+                       </Columns>
+                       <EmptyTemplate>
+                           <div class="text-center">No employees found.</div>
+                       </EmptyTemplate>
+                       <LoadingTemplate>
+                           <div class="text-center">Loading...</div>
+                       </LoadingTemplate>
+                   </RadzenDataGrid>
+               </div>
+                          </RadzenTabsItem>
+                 <RadzenTabsItem Text="Employes Sortants">
+                   
+
+                        <div class="option-employe">
+                            <div class="input-group w-25">
+                            <input type="text" class="form-control" placeholder="Search" @bind-value="searchTerm2" @oninput="SearchEmployeesByStatus0" />
+                                <button class="btn-p" type="button">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-employe">
+                        <RadzenDataGrid TItem="Employe" Data="@filteredEmployeesStatus0"
+                                            AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10" >
+                                <Columns>
+                                <RadzenDataGridColumn TItem="Employe" Title="Nom" Filterable=false>
+                                        <Template Context="employee">
+                                            <span style="text-transform: uppercase; font-weight: bold;">
+                                                @employee.Nom
+                                            </span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Employe" Property="Prenom" Title="Prenom" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Property="FonctionName" Title="Fonction" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Property="NSecuriteSocial" Title="N Securite Sociale" Filterable=false />
+                                <RadzenDataGridColumn TItem="Employe" Title="Option" Width="130px" Filterable=false>
+                                        <Template Context="employee">
+                                            <div style="display: flex;align-items: center;justify-content: space-evenly;">
+
+
+                                                <button class="btn-p px-3 py-2" @onclick="() => Show_Popup_DisplayEmploye(employee)">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                                <button class="btn-c px-3 py-2" @onclick="() => ConfirmReturn(employee.EmployeID)">
+                                                    <i class="fa-solid fa-rotate-left"></i>
+                                                </button>
+
+                                            </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                                <EmptyTemplate>
+                                    <div class="text-center">No employees found.</div>
+                                </EmptyTemplate>
+                                <LoadingTemplate>
+                                    <div class="text-center">Loading...</div>
+                                </LoadingTemplate>
+                            </RadzenDataGrid>
+                        </div>
+                        <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" showbtn=false IsDisabled=true OnClose="@Hide_Popup_UpdateEmploye" />
+                        <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" showbtn=false IsDisabled=false OnClose="@Hide_Popup_ShowEmploye" />
+                              
+                        <ConfirmationPopup @ref="confirmationPopup" OnConfirmation="HandlePopupResponse" Title="Confirmation" objective="Supprimer" />
+                        <ConfirmationPopup @ref="confirmationPopup2" OnConfirmation="HandlePopupResponse2" Title="Confirmation" objective="Renvoyer" />
+                        <!--Tab2end-->
+                 
+           </RadzenTabsItem>
+       </Tabs>
+   </RadzenTabs>
+
+
+   
+   
+   
+   
+   
+
+   <AddFonctionPopup IsVisibleAddFunction="@isVisibleAddFunction" OnClose="@Hide_Popup_AddFunction" OnSave="@HandleFonctionSave" />
+        <ModifierFonctionPopup IsVisibleUpdateFunction="@isVisibleUpdFunction" OnClose="@Hide_Popup_UpdateFunction" OnSave="@HandleModifyFonctionSave" OnDelete="HandleDeleteFonction" />
+        <SuccessPopup data="@datapop" @ref="successTost" />
+    <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_UpdateEmploye" OnSave="@HandleEditSave" />
+    <UpdateEmployeePopup IsVisibleUpdateEmploye="@isDisplayPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_DisplayEmploye" OnSave="@HandleEditSave" showbtn="false" IsDisabled="true"/>
+
+    @*<ConfirmationPopup IsVisibleConfirm="isConfirmVisible" @ref="confirmationPopup2" OnConfirmation="HandlePopupResponse" Title="Confirmation" />*@
+</div>
+
+<style>
+    .option-employe {
+        display: flex;
+        align-items: center;
+        justify-content: space-between; 
+        gap: 10px; 
+    }
+
+    .btn-refresh {
+        margin-right: auto; 
+    }
+
+        .rz-button.rz-primary{
+            background-color: #2563eb;
+        }
+</style>
+}

@@ -1,8 +1,6 @@
-﻿using GestionPersonnel.Models.Salaires;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
 using System.Data;
-using System.Threading.Tasks;
 
 namespace Infrastructures.Storages.TransferData
 {

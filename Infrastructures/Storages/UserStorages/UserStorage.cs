@@ -1,6 +1,5 @@
 ﻿using System.Data.SqlClient;
-using Infrastructures.Domains.Models;
-using Infrastructures.Storages.UserStorages;
+using GrhDz.Domains.Models.Users;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructures.Storages.UserStorages;

@@ -1,0 +1,10 @@
+﻿namespace GrhDz.Domains.Models.Equipe
+{
+    public class Equipe
+    {
+        public int EquipeID { get; set; }
+        public string NomEquipe { get; set; }
+        public int ? ChefEquipeID { get; set; }
+        public int Status { get; set; }
+    }
+}

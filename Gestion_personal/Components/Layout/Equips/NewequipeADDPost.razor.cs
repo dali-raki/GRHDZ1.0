@@ -1,8 +1,13 @@
-﻿using GestionPersonnel.Models.Employe;
-using GestionPersonnel.Models.EmplyeeEquipe;
-using GestionPersonnel.Models.Equipe;
-using Implementation.Services.Logs;
-using Infrastructures.Domains.Models.Logs;
+﻿using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.EmplyeeEquipe;
+using GrhDz.Domains.Models.Equipe;
+using GrhDz.Domains.Models.Logs;
+using Implementation.Services.EmployeModel;
+using Implementation.Services.Equipes;
+using Implementation.Services.LogsAction;
+using Implementation.Services.Post;
+using Implementation.Services.Users;
 using Microsoft.AspNetCore.Components;
 
 namespace Gestion_personal.Components.Layout.Equips;
@@ -13,14 +18,22 @@ public partial class NewequipeADDPost
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<EquipesInfos> OnSave { get; set; }
     [Inject] private ILogsActionService logsActionService { get; set; }
-    private List<Employe> employees;
+
+
+    [Inject]private IPosteService PosteService { get; set; }
+    [Inject] private IEquipeService EquipeService { get; set; }
+    [Inject] private IEmployeService EmployeService { get; set; }
+    [Inject] private UserSessionStateService UserSession { get; set; }
+
+    private Result<List<Employe>> employees;
     private string searchTerm = "";
+    private Result<List<Equipe>> equipesr;
     private List<Equipe> equipes;
     private List<EmployeeEquipe> employeeequipe;
     private List<int> SelectedEmployeeIds { get; set; } = new List<int>();
     private IEnumerable<Employe> FilteredEmployees => string.IsNullOrWhiteSpace(searchTerm)
-    ? employees
-    : employees.Where(e =>
+    ? employees.Value
+    : employees.Value.Where(e =>
         (!string.IsNullOrEmpty(e.Nom) && e.Nom.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
         (!string.IsNullOrEmpty(e.Prenom) && e.Prenom.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
 
@@ -36,7 +49,8 @@ public partial class NewequipeADDPost
 
     protected override async Task OnInitializedAsync()
     {
-        equipes = await EquipeService.GetAllEquipesAsync();
+        equipesr = await EquipeService.GetAllEquipesAsync();
+        equipes = equipesr.Value;
     }
 
     private async Task OnEquipeChanged(object value)
@@ -81,12 +95,12 @@ public partial class NewequipeADDPost
             SelectedEmployeeIds = new List<int>();
 
 
-            var log = new LogActions
+            var log = new LogAction
             {
                 ActionType = ActionType.Insert,
                 ActionDate = DateTime.Now,
                 Description = $"Ajouter Post",
-                PerformedBy = UserSession.Name,
+                PerformedBy = UserSession.UserName,
             };
             await logsActionService.settLog(log);
 

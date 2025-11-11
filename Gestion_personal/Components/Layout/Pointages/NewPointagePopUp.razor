@@ -1,6 +1,4 @@
-﻿@using GestionPersonnel.Services;
-@inject IPointageService PointageService
-@inject UserSessionStateService UserSession
+﻿
 @if (IsVisiblePointage)
 {
     <div class="modal" tabindex="-1" style="display: block;">
@@ -14,7 +12,7 @@
                     @if (Pointage != null)
                     {
                         <div>
-                            <p><strong>Full name:</strong> @Pointage.NomEmploye  @Pointage.PrenomEmploye</p>
+                            @*<p><strong>Full name:</strong> @Pointage.NomEmploye  @Pointage.PrenomEmploye</p> *@ 
                             <p><strong>Nom Fonction:</strong>@Pointage.NomFonction</p>
                             <p><strong>Stat:</strong>@Pointage.Stat</p>
                             <p><strong>Pourcentage:</strong>@Pointage.JourneeCoefficient %</p>

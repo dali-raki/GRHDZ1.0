@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Gestion_personal.Components;
+using Gestion_personal.Components.Models.Login;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Gestion_personal.Components.Models.Login;
-using Gestion_personal.Components;
+
+namespace Gestion_personal.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -26,11 +29,11 @@ public class AuthController : ControllerBase
             return Unauthorized("اسم المستخدم أو كلمة السر غير صحيحة");
 
         var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.UserName ?? "N/V"),
-        new Claim("UserId", user.Id.ToString()),
-        new Claim(ClaimTypes.Role, user.Role ?? "N/V")
-    };
+        {
+            new Claim(ClaimTypes.Name, user.UserName ?? "N/V"),
+            new Claim("UserId", user.Id.ToString()),
+            new Claim(ClaimTypes.Role, user.Role ?? "N/V")
+        };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);

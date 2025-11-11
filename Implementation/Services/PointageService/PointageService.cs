@@ -1,52 +1,108 @@
-﻿using GestionPersonnel.Models.Pointage;
-using GestionPersonnel.Storages.PointagesStorages;
+﻿using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Pointages;
+using Infrastructures.Storages.PointagesStorages;
 
-namespace GestionPersonnel.Services
+namespace Implementation.Services.PointageService
 {
-    public class PointageService : IPointageService
+    public class PointageService(PointageStorage pointageStorage) : IPointageService
     {
-        private readonly PointageStorage _pointageStorage;
 
-        public PointageService(PointageStorage pointageStorage)
+
+        public async Task<Result<List<Pointage>>> GetAll()
         {
-            _pointageStorage = pointageStorage;
+            try
+            {
+                var pointages = await pointageStorage.GetAll();
+                return Result.Success(pointages);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<List<Pointage>>(Error.Exception(ex));
+            }
         }
 
-        public async Task<List<Pointage>> GetAll()
+        public async Task<Result<List<Pointage>>> GetByDate(DateTime date)
         {
-            return await _pointageStorage.GetAll();
+            try
+            {
+                var pointages = await pointageStorage.GetPointagesByDateAsync(date);
+                return Result.Success(pointages);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<List<Pointage>>(Error.Exception(ex));
+            }
         }
 
-        public async Task<List<Pointage>> GetByDate(DateTime date)
+        public async Task<Result<Pointage?>> GetByIdAndDate(int id, DateOnly date)
         {
-            return await _pointageStorage.GetPointagesByDateAsync(date);
+            try
+            {
+                var pointage = await pointageStorage.GetByIdAndDate(id, date);
+                return Result.Success(pointage);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<Pointage?>(Error.Exception(ex));
+            }
         }
 
-
-        public async Task<Pointage?> GetByIdAndDate(int id, DateOnly date)
+        public async Task<Result<bool>> Add(Pointage pointage)
         {
-            return await _pointageStorage.GetByIdAndDate(id, date);
+            try
+            {
+                if (pointage == null)
+                    return Result.Failure<bool>(Error.Validation("Pointage cannot be null."));
+
+                await pointageStorage.Add(pointage);
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<bool>(Error.Exception(ex));
+            }
         }
 
-        public async Task Add(Pointage pointage)
+        public async Task<Result<bool>> Update(Pointage pointage)
         {
-            await _pointageStorage.Add(pointage);
+            try
+            {
+                if (pointage == null)
+                    return Result.Failure<bool>(Error.Validation("Pointage cannot be null."));
+
+                await pointageStorage.Update(pointage);
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<bool>(Error.Exception(ex));
+            }
         }
 
-        public async Task Update(Pointage pointage)
+        public async Task<Result<bool>> Delete(int id)
         {
-            await _pointageStorage.Update(pointage);
+            try
+            {
+                await pointageStorage.Delete(id);
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<bool>(Error.Exception(ex));
+            }
         }
 
-        public async Task Delete(int id)
+        public async Task<Result<List<Pointage>>> GetAll_Pointage()
         {
-            await _pointageStorage.Delete(id);
-        }
-
-        public async Task <List<Pointage>> GetAll_Pointage()
-        {
-            return await _pointageStorage.GetAllWithCoefficients();
-
+            try
+            {
+                var pointages = await pointageStorage.GetAllWithCoefficients();
+                return Result.Success(pointages);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<List<Pointage>>(Error.Exception(ex));
+            }
         }
     }
 }

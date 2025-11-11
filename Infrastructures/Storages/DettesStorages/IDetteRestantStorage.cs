@@ -1,6 +1,6 @@
-﻿using GestionPersonnel.Models.Dettes;
+﻿using GrhDz.Domains.Models.Dettes;
 
-namespace GestionPersonnel.Storages.DettesStorages
+namespace Infrastructures.Storages.DettesStorages
 {
     public interface IDetteRestantStorage
     {
@@ -8,8 +8,13 @@ namespace GestionPersonnel.Storages.DettesStorages
         Task<List<DetteRestant>> GetByEmployeIdAsync(int employeId);
         Task<List<DetteRestant>> GetAll();
         Task<DetteRestant?> GetById(int id);
+        Task<DetteRestant?> GetById2(int id);
+
         Task Add(DetteRestant detteRestant);
+
         Task Update(DetteRestant detteRestant);
+
         Task Delete(int id);
+        Task MontantRetirer(int employeid, decimal montant);
     }
 }

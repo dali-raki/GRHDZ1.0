@@ -1,16 +1,17 @@
-using GestionPersonnel.Models.Avances;
-using GestionPersonnel.Models.Dettes;
-using GestionPersonnel.Models.Primes;
-using GestionPersonnel.Models.Salaires;
-using GestionPersonnel.Services;
-using Implementation.Services.Logs;
+using Microsoft.AspNetCore.Components;
+using GrhDz.Domains.Models.Avances;
+using Implementation.Services.Dettes;
+using GrhDz.Domains.Models.Salaires;
+using GrhDz.Apps.Avances;
+using GrhDz.Apps.Dettes;
+using GrhDz.Domains.Models.Remboursements;
+using GrhDz.Domains.Models.Primes;
+using GrhDz.Domains.Models.Logs;
+using GrhDz.Domains.Models.Dettes;
+using Implementation.Services.Avance;
+using Implementation.Services.LogsAction;
 using Implementation.Services.Prime;
 using Implementation.Services.Remboursement;
-using Infrastructures.Domains.Models;
-using Infrastructures.Domains.Models.Logs;
-using Infrastructures.Domains.Models.Remboursements;
-using Microsoft.AspNetCore.Components;
-using static MudBlazor.CategoryTypes;
 
 namespace Gestion_personal.Components.Layout.Paiements
 {
@@ -26,7 +27,7 @@ namespace Gestion_personal.Components.Layout.Paiements
 
         private bool display = false;
         private Dette newDette;
-        private Avance newAvance;
+        private AvanceModel _newAvanceModel;
         private RemboursementType newRemboursement;
         private PrimeType newPrime;
         private int type;
@@ -51,20 +52,20 @@ namespace Gestion_personal.Components.Layout.Paiements
             if (type == 1)
             {
 
-                newAvance = new Avance
+                _newAvanceModel = new AvanceModel
                 {
                     EmployeID = SalaireDetail.EmployeId,
                     Montant = SalaireDetail.amount,
                     Date = DateTime.Now,
                     Description = SalaireDetail.Description,
                 };
-                await AvanceService.AddAsync(newAvance);
-                var log = new LogActions
+                await AvanceService.AddAsync(_newAvanceModel);
+                var log = new LogAction
                 {
                     ActionType = ActionType.Insert,
                     ActionDate = DateTime.Now,
-                    Description = $"Donner une avance ",
-                    PerformedBy = UserSession.Name,
+                    Description = $"Donner une avanceModel ",
+                    PerformedBy = UserSession.UserName,
                 };
                 await logsActionService.settLog(log);
 
@@ -80,12 +81,12 @@ namespace Gestion_personal.Components.Layout.Paiements
                 };
                 await DetteService.AddAsync(newDette);
 
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Insert,
                     ActionDate = DateTime.Now,
                     Description = $"Donner une Dette ",
-                    PerformedBy = UserSession.Name,
+                    PerformedBy = UserSession.UserName,
                 };
                 await logsActionService.settLog(log);
             }
@@ -100,12 +101,12 @@ namespace Gestion_personal.Components.Layout.Paiements
                 };
                 await remboursement.AddAsync(newRemboursement);
 
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Insert,
                     ActionDate = DateTime.Now,
                     Description = $"Donner une Remboursement ",
-                    PerformedBy = UserSession.Name,
+                    PerformedBy = UserSession.UserName,
                 };
                 await logsActionService.settLog(log);
             }
@@ -120,12 +121,12 @@ namespace Gestion_personal.Components.Layout.Paiements
                 };
                 await primeService.AddAsync(newPrime);
 
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Insert,
                     ActionDate = DateTime.Now,
                     Description = $"Donner une Prime ",
-                    PerformedBy = UserSession.Name,
+                    PerformedBy = UserSession.UserName,
                 };
                 await logsActionService.settLog(log);
             }
@@ -146,7 +147,7 @@ namespace Gestion_personal.Components.Layout.Paiements
         {
             return type switch
             {
-                1 => "Ajouter Avance",
+                1 => "Ajouter AvanceModel",
                 2 => "Ajouter Dette",
                 3 => "Ajouter Remboursement",
                 4 => "Ajouter Prime",
@@ -158,7 +159,7 @@ namespace Gestion_personal.Components.Layout.Paiements
         {
             return type switch
             {
-                1 => "btn btn-primary",   // Avance: Bleu
+                1 => "btn btn-primary",   // AvanceModel: Bleu
                 2 => "btn btn-danger",    // Dette: Rouge
                 3 => "btn btn-success",   // Remboursement: Vert
                 4 => "btn btn-warning text-white",  // Prime: Jaune

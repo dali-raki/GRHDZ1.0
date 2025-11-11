@@ -1,19 +1,15 @@
-﻿using GestionPersonnel.Models.Avances;
-using GestionPersonnel.Models.Dettes;
+﻿using GrhDz.Domains.Models.Avances;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Reflection;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace GestionPersonnel.Storages.AvancesStorages
+namespace Infrastructures.Storages.AvancesStorages
 {
-    public class AvanceStorage
+    public class AvanceStorage(IConfiguration configuration) : IAvanceStorage
     {
-        private readonly string _connectionString;
-
-        public AvanceStorage(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DBConnection");
-        }
+        private readonly string _connectionString = configuration.GetConnectionString("DBConnection") ?? throw new InvalidCastException("Connection string is missing or empty.");
 
         private const string SelectAllQuery = "SELECT * FROM Avances";
         private const string SelectByIdQuery = "SELECT * FROM Avances WHERE AvanceID = @id";
@@ -24,11 +20,15 @@ namespace GestionPersonnel.Storages.AvancesStorages
         private const string DeleteQuery = "DELETE FROM Avances WHERE AvanceID = @AvanceID;";
         private const string SelectByDate = "SELECT * FROM Avances WHERE Date=@Date";
         private const string SelectTotaleAvances = "SELECT SUM(Montant)  FROM Avances WHERE YEAR(Date) = YEAR(@Date) AND MONTH(Date) = MONTH(@Date);";
+        private const string SelectAvacebyDate = @"
+        SELECT  a.AvanceID, a.EmployeID, e.Nom,e.Prenom, a.Montant, a.Date FROM Avances] a
+        INNER JOIN  [Employes] e ON   a.EmployeID = e.EmployeID  WHERE 
+        YEAR(a.Date) = YEAR(@Date) AND MONTH(a.Date) = MONTH(@Date) ORDER BY  a.Date DESC;"; 
 
 
-        private static Avance GetAvanceFromDataRow(DataRow row)
+        private static AvanceModel GetAvanceFromDataRow(DataRow row)
         {
-            return new Avance
+            return new AvanceModel
             {
                 AvanceID = (int)row["AvanceID"],
                 EmployeID = (int)row["EmployeID"],
@@ -36,9 +36,9 @@ namespace GestionPersonnel.Storages.AvancesStorages
                 Date = (DateTime)row["Date"]
             };
         }
-        public async Task<List<Avance>> GetByEmployeIdInMonth(int employeId, DateTime selectedMonth)
+        public async Task<List<AvanceModel>> GetByEmployeIdInMonth(int employeId, DateTime selectedMonth)
         {
-            var avances = new List<Avance>();
+            var avances = new List<AvanceModel>();
 
             // Set start of the month: e.g., 2025-07-01
             var startOfMonth = new DateTime(selectedMonth.Year, selectedMonth.Month, 1);
@@ -73,7 +73,7 @@ namespace GestionPersonnel.Storages.AvancesStorages
 
 
 
-        public async Task<List<Avance>> GetAll()
+        public async Task<List<AvanceModel>> GetAll()
         {
             await using var connection = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(SelectAllQuery, connection);
@@ -87,7 +87,7 @@ namespace GestionPersonnel.Storages.AvancesStorages
             return (from DataRow row in dataTable.Rows select GetAvanceFromDataRow(row)).ToList();
         }
 
-        public async Task<Avance> GetById(int avanceId)
+        public async Task<AvanceModel?> GetById(int avanceId)
         {
             await using var connection = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(SelectByIdQuery, connection);
@@ -99,36 +99,33 @@ namespace GestionPersonnel.Storages.AvancesStorages
             await connection.OpenAsync();
             da.Fill(dataTable);
 
-            if (dataTable.Rows.Count == 0)
-                throw new KeyNotFoundException($"Avance with ID {avanceId} not found.");
-
-            return GetAvanceFromDataRow(dataTable.Rows[0]);
+            return (dataTable.Rows.Count == 0) ? null : GetAvanceFromDataRow(dataTable.Rows[0]);
         }
 
-        public async Task<int> Add(Avance avance)
+        public async Task<int> Add(AvanceModel avanceModel)
         {
             await using var connection = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(InsertQuery, connection);
 
-            cmd.Parameters.AddWithValue("@EmployeID", avance.EmployeID);
-            cmd.Parameters.AddWithValue("@Montant", avance.Montant);
-            cmd.Parameters.AddWithValue("@Date", avance.Date);
-            cmd.Parameters.Add(new SqlParameter("@Description", avance.Description ?? "No Comment"));
+            cmd.Parameters.AddWithValue("@EmployeID", avanceModel.EmployeID);
+            cmd.Parameters.AddWithValue("@Montant", avanceModel.Montant);
+            cmd.Parameters.AddWithValue("@Date", avanceModel.Date);
+            cmd.Parameters.Add(new SqlParameter("@Description", avanceModel.Description ?? "No Comment"));
 
             await connection.OpenAsync();
             var id = await cmd.ExecuteScalarAsync();
             return Convert.ToInt32(id);
         }
 
-        public async Task Update(Avance avance)
+        public async Task Update(AvanceModel avanceModel)
         {
             await using var connection = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(UpdateQuery, connection);
 
-            cmd.Parameters.AddWithValue("@EmployeID", avance.EmployeID);
-            cmd.Parameters.AddWithValue("@Montant", avance.Montant);
-            cmd.Parameters.AddWithValue("@Date", avance.Date);
-            cmd.Parameters.AddWithValue("@AvanceID", avance.AvanceID);
+            cmd.Parameters.AddWithValue("@EmployeID", avanceModel.EmployeID);
+            cmd.Parameters.AddWithValue("@Montant", avanceModel.Montant);
+            cmd.Parameters.AddWithValue("@Date", avanceModel.Date);
+            cmd.Parameters.AddWithValue("@AvanceID", avanceModel.AvanceID);
 
             await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
@@ -144,9 +141,9 @@ namespace GestionPersonnel.Storages.AvancesStorages
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task<List<Avance>> GetByDate(DateTime date)
+        public async Task<List<AvanceModel>> GetByDate(DateTime date)
         {
-            var avances = new List<Avance>();
+            var avances = new List<AvanceModel>();
 
             await using var connection = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(SelectByDate, connection);
@@ -185,33 +182,14 @@ namespace GestionPersonnel.Storages.AvancesStorages
 
             return totaleAvances;
         }
-        public async Task<List<Avance>> GetAvancesWithEmployee(DateTime specificDate)
+        public async Task<List<AvanceModel>> GetAvancesWithEmployee(DateTime specificDate)
         {
-            var avances = new List<Avance>();
+            var avances = new List<AvanceModel>();
 
             await using var connection = new SqlConnection(_connectionString);
 
-            // SQL query to filter by specific date
-            var query = @"
-        SELECT 
-            a.AvanceID,
-            a.EmployeID,
-            e.Nom,
-            e.Prenom,
-            a.Montant,
-            a.Date
-        FROM 
-            [db_aa9d4f_gestionpersonnel].[dbo].[Avances] a
-        INNER JOIN 
-            [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e
-        ON 
-            a.EmployeID = e.EmployeID
-       WHERE 
-    YEAR(a.Date) = YEAR(@Date) AND MONTH(a.Date) = MONTH(@Date)
-        ORDER BY 
-            a.Date DESC;"; // Filter by specific date and order by date descending
 
-            using var cmd = new SqlCommand(query, connection);
+           await using var cmd = new SqlCommand(SelectAvacebyDate, connection);
 
             // Add the specific date parameter to the query
             cmd.Parameters.AddWithValue("@Date", specificDate);
@@ -224,7 +202,7 @@ namespace GestionPersonnel.Storages.AvancesStorages
 
             foreach (DataRow row in dataTable.Rows)
             {
-                var avance = new Avance
+                var avance = new AvanceModel
                 {
                     AvanceID = (int)row["AvanceID"],
                     EmployeID = (int)row["EmployeID"],

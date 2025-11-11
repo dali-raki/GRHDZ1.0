@@ -1,0 +1,313 @@
+﻿@using Radzen.Blazor
+@if (IsVisibleUpdateEmploye)
+{
+    <div class="modal show" tabindex="-1" style="display: block;">
+        <div class=" custom-modal" id="modal-dialog">
+            <div id="modal-content">
+
+                <!-- Header -->
+                <div class="modal-header blue-header">
+                    <h5 class="modal-title">
+                         Modifier Employé
+                    </h5>
+                </div>
+
+                <div class="modal-body" id="exception-flex">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+                    <div class="photo-zone">
+
+                
+                    <!-- Photo Upload -->
+                    <div class="photo-section">
+                        <label>Photo</label>
+                        <div class="photo-card">
+                            @if (Employee.Photo != null && Employee.Photo.Length > 0)
+                            {
+                                <img src="data:image/jpeg;base64,@Convert.ToBase64String(Employee.Photo)" class="uploaded-photo" />
+                            }
+                            else
+                            {
+                                <img src="images/default-employee.png" class="uploaded-photo" />
+                            }
+                        </div>
+                        <label for="file-upload" class="upload-button">
+                            <i class="fas fa-camera"></i> Choisir Photo
+                        </label>
+                            <InputFile id="file-upload" OnChange="HandleFileSelected" style="display: none;" disabled="@IsDisabled" />
+                    </div>
+                    </div>
+                    <div class="inoramation-zone">
+                    <form @onsubmit="HandleSubmit">
+
+                        <!-- Personal Information -->
+                        <h5 class="section-title" id="seperation"><i class="fas fa-id-card"></i> Informations Personnelles</h5>
+                        <div class="form-sections">
+                            <!-- Left -->
+                            <div class="form-group">
+                                <label for="Nom">Nom</label>
+                                    <input id="Nom" type="text" @bind="Employee.Nom" class="form-control" disabled="@IsDisabled"  required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="Prenom">Prénom</label>
+                                    <input id="Prenom" type="text" @bind="Employee.Prenom" class="form-control" disabled="@IsDisabled" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="DateNaissance">Date de Naissance</label>
+                                    <input id="DateNaissance" type="date" @bind="Employee.DateDeNaissance" class="form-control" disabled="@IsDisabled" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="DateEntree">Date d'Entrée</label>
+                                    <input id="DateEntree" type="date" @bind="Employee.DateEntree" class="form-control" disabled="@IsDisabled" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="NSecuriteSocial">N° Sécurité Sociale</label>
+                                    <input id="NSecuriteSocial" type="text" @bind="Employee.NSecuriteSocial" class="form-control" disabled="@IsDisabled" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="GroupSanguin">Groupe Sanguin</label>
+                                    <select id="GroupSanguin" @bind="Employee.GroupSanguin" class="form-control" disabled="@IsDisabled" required>
+                                    <option value="">-- Sélectionner --</option>
+                                    <option>O+</option>
+                                    <option>O-</option>
+                                    <option>A+</option>
+                                    <option>A-</option>
+                                    <option>B+</option>
+                                    <option>B-</option>
+                                    <option>AB+</option>
+                                    <option>AB-</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="SitiationFamiliale">Situation Familiale</label>
+                                    <select id="SitiationFamiliale" @bind="Employee.SituationFamiliale" class="form-control" disabled="@IsDisabled" required>
+                                    <option value="">-- Sélectionner --</option>
+                                    <option value="Célibataire">Célibataire</option>
+                                    <option value="Marié(e)">Marié(e)</option>
+                                    <option value="Divorcé(e)">Divorcé(e)</option>
+                                    <option value="Veuf(ve)">Veuf(ve)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Contact Info -->
+                            <h5 class="section-title" id="seperation"><i class="fas fa-phone"></i> Informations de Contact</h5>
+                        <div class="form-sections">
+                            <div class="form-group">
+                                <label for="NTelephone">N° Téléphone</label>
+                                    <input id="NTelephone" type="text" @bind="Employee.NTelephone" class="form-control" disabled="@IsDisabled" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="Adresse">Adresse</label>
+                                    <input id="Adresse" type="text" @bind="Employee.Adresse" class="form-control" disabled="@IsDisabled" required />
+                            </div>
+                        </div>
+
+                        <!-- Professional Info -->
+                            <h5 class="section-title" id="seperation"><i class="fas fa-briefcase"></i> Informations Professionnelles</h5>
+                            <div class="form-group">
+                                <label for="FonctionID">Fonction</label>
+                                <RadzenDropDown id="FonctionID"
+                                                Data="@fonctions"
+                                                TextProperty="NomFonction"
+                                                ValueProperty="FonctionID"
+                                                @bind-Value="Employee.FonctionID"
+                                                Placeholder="-- Sélectionner Fonction --"
+                                                Style="width:100%"
+                                                Class="form-control"
+                                                Name="FonctionID"
+                                                AllowClear="true"
+                                                Required="true" 
+                                                AllowFiltering="true" Disabled=IsDisabled/>
+                            </div>
+                          
+                                <div class="form-sections">
+                                    <div class="form-group">
+                                        <label for="SalaireMensuel">Salaire Mensuel (DA)</label>
+                                    <input id="SalaireMensuel" type="number" @bind="SalaireMensuel" class="form-control" disabled="@IsDisabled" required />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="SalaireJournalier">Salaire Journalier (DA)</label>
+                                    <input id="SalaireJournalier" type="number" @bind="Employee.Journee" class="form-control" disabled="@IsDisabled" required />
+                                    </div>
+                                </div>
+                            
+                            
+
+                        <!-- Footer Buttons -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn-c" @onclick="Hide_Popup_UpdateEmploye">Annuler</button>
+                                @if (showbtn)
+                                {
+                                    <button type="submit" class="btn-p">Sauvegarder</button>
+                                }
+                                
+                        </div>
+                    </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<style>
+    #modal-dialog,
+    #modal-content {
+        width: 900px !important;
+        margin: auto;
+    }
+
+    #modal-content {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 20px;
+    }
+
+
+    .photo-section {
+        text-align: center;
+        margin: 1.5rem 0;
+    }
+
+    .photo-card {
+        width: 180px;
+        height: 180px;
+        margin: auto;
+        background-color: #f3f4f6;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .uploaded-photo {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    .upload-button {
+        margin-top: 0.75rem;
+        display: inline-block;
+        background-color: #eff6ff;
+        border: 1px solid #93c5fd;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #2563eb;
+        font-size: 14px;
+    }
+
+    .section-title {
+        font-weight: 600;
+        margin: 1rem 0 0.5rem;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    input.form-control,
+    select.form-control {
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-c {
+        background-color: #f3f4f6;
+        color: #111827;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    @*    .btn-p {
+        background-color: #2563eb;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+    } *@
+    #seperation {
+        border-bottom: 1px solid #dee2e6;
+        padding: 5px 0;
+    }
+
+    #exception-flex {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .inoramation-zone {
+        width: 70%;
+    }
+
+    .photo-zone {
+        width: 30%;
+    }
+
+    .photo-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 200px; /* You can adjust the width */
+    }
+
+    .photo-card {
+        width: 100%;
+        height: 200px; /* Set desired height */
+        overflow: hidden;
+        border-radius: 8px;
+        position: relative;
+        background-color: #f0f0f0;
+    }
+
+    .uploaded-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Ensures the image covers the entire area */
+        display: block;
+    }
+</style>
+
+

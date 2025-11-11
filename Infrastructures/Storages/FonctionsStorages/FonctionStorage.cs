@@ -1,14 +1,18 @@
 ﻿using System.Data.SqlClient;
-using GestionPersonnel.Models.Fonctions;
+using GrhDz.Domains.Models.Fonctions;
 using Microsoft.Extensions.Configuration;
 
-namespace GestionPersonnel.Storages.FonctionsStorages
+namespace Infrastructures.Storages.FonctionsStorages
 {
-    public class FonctionStorage
+    public class FonctionStorage : IFonctionStorage
     {
         private readonly string _connectionString;
 
-
+        private const string selectfunctionbyid = "SELECT FonctionID, NomFonction FROM Fonctions WHERE FonctionID = @FonctionID"; // Ensure this matches your table name
+        private const string insertfunction = "INSERT INTO Fonctions (NomFonction) VALUES (@NomFonction)";
+        private const string updatefunction = "UPDATE Fonctions SET NomFonction = @NomFonction WHERE FonctionID = @FonctionID";
+        private const string deleteQuery = "DELETE FROM Fonctions WHERE FonctionID = @FonctionID";
+        private const string checkQuery = "SELECT COUNT(*) FROM Employes WHERE FonctionID = @FonctionID";
         public FonctionStorage(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("DBConnection");
@@ -17,13 +21,13 @@ namespace GestionPersonnel.Storages.FonctionsStorages
         public async Task<List<Fonction>> GetAll()
         {
             var fonctions = new List<Fonction>();
-            string query = "SELECT FonctionID, NomFonction FROM Fonctions"; 
+            string query = "SELECT FonctionID, NomFonction FROM Fonctions";
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 SqlCommand command = new SqlCommand(query, connection);
                 await connection.OpenAsync();
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                await using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
@@ -40,11 +44,11 @@ namespace GestionPersonnel.Storages.FonctionsStorages
 
         public async Task Add(Fonction fonction)
         {
-            string query = "INSERT INTO Fonctions (NomFonction) VALUES (@NomFonction)"; 
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                SqlCommand command = new SqlCommand(query, connection);
+                SqlCommand command = new SqlCommand(insertfunction, connection);
                 command.Parameters.AddWithValue("@NomFonction", fonction.NomFonction);
                 await connection.OpenAsync();
                 await command.ExecuteNonQueryAsync();
@@ -53,11 +57,11 @@ namespace GestionPersonnel.Storages.FonctionsStorages
 
         public async Task Update(Fonction fonction)
         {
-            string query = "UPDATE Fonctions SET NomFonction = @NomFonction WHERE FonctionID = @FonctionID"; // Ensure this matches your table name
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                SqlCommand command = new SqlCommand(query, connection);
+                SqlCommand command = new SqlCommand(updatefunction, connection);
                 command.Parameters.AddWithValue("@NomFonction", fonction.NomFonction);
                 command.Parameters.AddWithValue("@FonctionID", fonction.FonctionID);
                 await connection.OpenAsync();
@@ -70,12 +74,9 @@ namespace GestionPersonnel.Storages.FonctionsStorages
             try
             {
                 // Check if the Fonction is referenced by any employee
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                await using (SqlConnection connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
-
-                    // Count employees referencing this function
-                    string checkQuery = "SELECT COUNT(*) FROM Employes WHERE FonctionID = @FonctionID";
                     SqlCommand checkCommand = new SqlCommand(checkQuery, connection);
                     checkCommand.Parameters.AddWithValue("@FonctionID", fonctionId);
                     int count = (int)await checkCommand.ExecuteScalarAsync();
@@ -85,8 +86,7 @@ namespace GestionPersonnel.Storages.FonctionsStorages
                         throw new InvalidOperationException("The function cannot be deleted because it is referenced by employees.");
                     }
 
-                    // Delete the Fonction
-                    string deleteQuery = "DELETE FROM Fonctions WHERE FonctionID = @FonctionID";
+                  
                     SqlCommand deleteCommand = new SqlCommand(deleteQuery, connection);
                     deleteCommand.Parameters.AddWithValue("@FonctionID", fonctionId);
                     await deleteCommand.ExecuteNonQueryAsync();
@@ -103,14 +103,13 @@ namespace GestionPersonnel.Storages.FonctionsStorages
         public async Task<Fonction> GetById(int fonctionId)
         {
             Fonction fonction = null;
-            string query = "SELECT FonctionID, NomFonction FROM Fonctions WHERE FonctionID = @FonctionID"; // Ensure this matches your table name
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                SqlCommand command = new SqlCommand(query, connection);
+                SqlCommand command = new SqlCommand(selectfunctionbyid, connection);
                 command.Parameters.AddWithValue("@FonctionID", fonctionId);
                 await connection.OpenAsync();
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                await using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     if (await reader.ReadAsync())
                     {

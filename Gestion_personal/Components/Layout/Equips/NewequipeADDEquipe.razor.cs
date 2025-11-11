@@ -1,12 +1,15 @@
-using GestionPersonnel.Models.Employe;
-using GestionPersonnel.Models.Equipe;
-using GestionPersonnel.Models.Fonctions;
-using GestionPersonnel.Services;
-using GestionPersonnel.Services.EquipeServices;
-using Implementation.Services.Logs;
-using Infrastructures.Domains.Models.Logs;
+using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Equipe;
+using GrhDz.Domains.Models.Fonctions;
+using GrhDz.Domains.Models.Logs;
+using Implementation.Services.EmployeModel;
+using Implementation.Services.EquipeEmploye;
+using Implementation.Services.Equipes;
+using Implementation.Services.Fonctions;
+using Implementation.Services.LogsAction;
+using Implementation.Services.Users;
 using Microsoft.AspNetCore.Components;
-using Services.Interfaces;
 
 namespace Gestion_personal.Components.Layout.Equips
 {
@@ -19,13 +22,15 @@ namespace Gestion_personal.Components.Layout.Equips
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] private ILogsActionService logsActionService { get; set; }
 
+        [Inject] private UserSessionStateService userSession { get; set; }
         [Parameter] public bool IsVisibleAddEquipe { get; set; }
         [Parameter] public EventCallback OnClose { get; set; }
         [Parameter] public EventCallback OnAddEquipe { get; set; }
         
 
-        private List<Employe> employes = new();
-        private List<Fonction> fonctions = new();
+        private Result<List<Employe>> employes ;
+        private Result<List<Fonction>> fonctionsr;
+        private List<Fonction> fonctions;
         private List<Employe> filteredEmployes = new();
         private Dictionary<int, bool> employeeSelection = new();
         private string equipeName;
@@ -35,11 +40,12 @@ namespace Gestion_personal.Components.Layout.Equips
 
         protected override async Task OnInitializedAsync()
         {
-            employes = await EmployeService.GetEmployeesAsync();
-            fonctions = await FonctionService.GetAllAsync();
-            filteredEmployes = employes;
+            employes = await EmployeService.GetEmployeesByStatus(EmployeeStatus.Active);
+            fonctionsr = await FonctionService.GetAllAsync();
+            fonctions = fonctionsr.Value;
+            filteredEmployes = employes.Value;
 
-            employeeSelection = employes.ToDictionary(emp => emp.EmployeID, emp => false);
+            employeeSelection = employes.Value.ToDictionary(emp => emp.EmployeID, emp => false);
         }
 
         private async Task OnFonctionChange(object value)
@@ -48,13 +54,13 @@ namespace Gestion_personal.Components.Layout.Equips
 
             if (selectedFonctionId.HasValue)
             {
-                filteredEmployes = employes
+                filteredEmployes = employes.Value
                     .Where(emp => emp.FonctionID == selectedFonctionId.Value)
                     .ToList();
             }
             else
             {
-                filteredEmployes = employes;
+                filteredEmployes = employes.Value;
             }
 
             employeeSelection = filteredEmployes.ToDictionary(emp => emp.EmployeID, emp => false);
@@ -81,7 +87,7 @@ namespace Gestion_personal.Components.Layout.Equips
                     Status = 1
                 };
 
-                int equipeId = await EquipeService.Add(newEquipe);
+                Result<int> equipeId = await EquipeService.Add(newEquipe);
 
                 var selectedIds = employeeSelection
                     .Where(e => e.Value)
@@ -90,15 +96,15 @@ namespace Gestion_personal.Components.Layout.Equips
 
                 if (selectedIds.Any())
                 {
-                    await EmployeeEquipeService.AddEmployeesToEquipeAsync(equipeId, selectedIds);
+                    await EmployeeEquipeService.AddEmployeesToEquipeAsync(equipeId.Value, selectedIds);
                 }
 
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Insert,
                     ActionDate = DateTime.Now,
                     Description = $"Ajouter Equipe",
-                    PerformedBy = UserSession.Name
+                    PerformedBy = userSession.UserName
                 };
 
                 await logsActionService.settLog(log);
@@ -120,8 +126,8 @@ namespace Gestion_personal.Components.Layout.Equips
             equipeName = string.Empty;
             selectedChefId = 0;
             selectedFonctionId = null;
-            employeeSelection = employes.ToDictionary(emp => emp.EmployeID, emp => false);
-            filteredEmployes = employes;
+            employeeSelection = employes.Value.ToDictionary(emp => emp.EmployeID, emp => false);
+            filteredEmployes = employes.Value;
             searchTerm = "";
         }
 

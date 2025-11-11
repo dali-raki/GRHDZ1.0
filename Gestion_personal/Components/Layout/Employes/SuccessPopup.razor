@@ -1,7 +1,9 @@
 ﻿@code {
     [Parameter] public string data { get; set; }
-    [Parameter] public bool IsVisible { get; set; }
-    [Parameter] public EventCallback OnClose { get; set; }
+    private bool isVisible = false;
+
+    public void Show()=>isVisible=true;
+
     string keyframes;
     private async Task CloseToastAfterDelay()
     {
@@ -11,22 +13,19 @@
 
     private async Task CloseToast()
     {
-        if (OnClose.HasDelegate)
-        {
-            await OnClose.InvokeAsync();
-        }
+        isVisible = false;
     }
 
     protected override void OnParametersSet()
     {
-        if (IsVisible)
+        if (isVisible)
         {
             _ = CloseToastAfterDelay();
         }
     }
 }
 
-@if (IsVisible)
+@if (isVisible)
 {
     <div class="toast-container">
         <div class="toast-content" @onclick="CloseToast">

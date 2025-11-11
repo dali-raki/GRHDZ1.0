@@ -1,53 +1,19 @@
-﻿using Infrastructures.Domains.Models.Dashboard;
+﻿using GrhDz.Domains.Models.Dashboards;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlClient;
+using System.Runtime.InteropServices;
 
 namespace Infrastructures.Storages.DashboardStorages
 {
-    public class DashboardStorage
+    public class DashboardStorage(IConfiguration configuration) : IDashboardStorage
     {
-        private readonly string _connectionString;
+        private readonly string _connectionString = configuration.GetConnectionString("DBConnection") ?? throw new InvalidOperationException($"Connection string is missing or empty.");
+            
 
-        string getTotalDetteAndAvanceQuery = @"
-               WITH MonthCalendar AS (
-    SELECT 
-        YEAR(GETDATE()) AS Year, 
-        1 AS Month
-    UNION ALL
-    SELECT 
-        YEAR(GETDATE()) AS Year, 
-        Month + 1
-    FROM MonthCalendar
-    WHERE Month < 12
-)
-SELECT 
-    mc.Year,
-    mc.Month,
-    ISNULL(SUM(CASE WHEN Source = 'Avance' THEN Montant ELSE 0 END), 0) AS TotalAvance,
-    ISNULL(SUM(CASE WHEN Source = 'Dette' THEN Montant ELSE 0 END), 0) AS TotalDette
-FROM MonthCalendar mc
-LEFT JOIN (
-    SELECT 
-        YEAR(Date) AS Year,
-        MONTH(Date) AS Month,
-        Montant,
-        'Avance' AS Source
-    FROM [db_aa9d4f_gestionpersonnel].[dbo].[Avances]
-    UNION ALL
-    SELECT 
-        YEAR(Date) AS Year,
-        MONTH(Date) AS Month,
-        Montant,
-        'Dette' AS Source
-    FROM [db_aa9d4f_gestionpersonnel].[dbo].[Dettes]
-) AS CombinedData
-ON mc.Year = CombinedData.Year AND mc.Month = CombinedData.Month
-GROUP BY mc.Year, mc.Month
-ORDER BY mc.Year, mc.Month;
-
-";
-
+        
+        //private const string getTotalDetteAndAvanceQuery = "dbo.GetDashbordData";
 
         string differenceofabsence = @"
     DECLARE @Today DATE = GETDATE();
@@ -126,59 +92,77 @@ FULL JOIN
 
 
         string numberEquipe = @"SELECT COUNT(*) AS TotalEquipes
-FROM [db_aa9d4f_gestionpersonnel].[dbo].[Equipes];";
+FROM Equipes";
 
 
-        public DashboardStorage(IConfiguration configuration)
+
+        private const string _getDetteByYearQuery = @"
+            ;WITH Months AS (
+                SELECT 1 AS MonthNumber UNION ALL
+                SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL
+                SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL
+                SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL
+                SELECT 11 UNION ALL SELECT 12
+            )
+            SELECT 
+                m.MonthNumber,
+                DATENAME(MONTH, DATEFROMPARTS(@SelectedYear, m.MonthNumber, 1)) AS MonthName,
+                ISNULL(SUM(d.Montant), 0) AS TotalDette
+            FROM Months m
+            LEFT JOIN [dbo].[Dettes] d
+                ON MONTH(d.[Date]) = m.MonthNumber
+                AND YEAR(d.[Date]) = @SelectedYear
+            GROUP BY m.MonthNumber
+            ORDER BY m.MonthNumber;
+        ";
+
+
+        public async Task<List<DashboardModel>> GetDashboardDataAsync()
         {
-            _connectionString = configuration.GetConnectionString("DBConnection");
-        }
+            List<DashboardModel> dashboards = new List<DashboardModel>();
 
-        public async Task<List<Dashboard>> GetDashboardDataAsync()
-        {
-            List<Dashboard> dashboards = new List<Dashboard>();
+            await using SqlConnection conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
 
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            await using SqlCommand cmd = new SqlCommand(_getDetteByYearQuery, conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
             {
-                await conn.OpenAsync();
 
-                using (SqlCommand cmd = new SqlCommand(getTotalDetteAndAvanceQuery, conn))
-                {
-                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
-
-                    while (await reader.ReadAsync())
-                    {
-                        var dashboard = new Dashboard
-                        {
-                            Month = reader.GetInt32(reader.GetOrdinal("Month")),
-                            Year = reader.GetInt32(reader.GetOrdinal("Year")),
-                            Avance = reader.GetDecimal(reader.GetOrdinal("TotalAvance")),
-                            Dette = reader.GetDecimal(reader.GetOrdinal("TotalDette"))
-                        };
-
-                        dashboards.Add(dashboard);
-                    }
-                }
+                dashboards.Add(getDashboardModelFromReader(reader));
             }
 
             return dashboards;
+        }
+
+        private static DashboardModel getDashboardModelFromReader(SqlDataReader reader)
+        {
+            return new DashboardModel
+            {
+                Month = reader.GetInt32(reader.GetOrdinal("Month")),
+                Year = reader.GetInt32(reader.GetOrdinal("Year")),
+                Avance = reader.GetDecimal(reader.GetOrdinal("TotalAvance")),
+                Dette = reader.GetDecimal(reader.GetOrdinal("TotalDette"))
+            };
         }
 
         public async Task<List<DashboardPointage>> SelectPointageOfDashboard(int year, int month)
         {
             var result = new List<DashboardPointage>();
 
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+          await  using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
 
-                using (SqlCommand cmd = new SqlCommand("PointageOfDashboard", conn))
+                await using (SqlCommand cmd = new SqlCommand("PointageOfDashboard", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@Year", year);
                     cmd.Parameters.AddWithValue("@Month", month);
 
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    await using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
                         {
@@ -205,7 +189,7 @@ FROM [db_aa9d4f_gestionpersonnel].[dbo].[Equipes];";
 
         public async Task<DifferenceofPointage> SelectAbsenceComparison()
         {
-            using SqlConnection conn = new SqlConnection(_connectionString);
+            await using SqlConnection conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             using SqlCommand cmd = new SqlCommand(differenceofabsence, conn);
@@ -227,7 +211,7 @@ FROM [db_aa9d4f_gestionpersonnel].[dbo].[Equipes];";
 
         public async Task<DifferenceofPointage> SelectPresenceComparison()
         {
-            using SqlConnection conn = new SqlConnection(_connectionString);
+            await using SqlConnection conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             using SqlCommand cmd = new SqlCommand(differenceofpresence, conn);
@@ -248,10 +232,10 @@ FROM [db_aa9d4f_gestionpersonnel].[dbo].[Equipes];";
 
         public async Task<int> SelectCountEquipes()
         {
-            using SqlConnection conn = new SqlConnection(_connectionString);
+            await using SqlConnection conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            using SqlCommand cmd = new SqlCommand(numberEquipe, conn);
+            await using SqlCommand cmd = new SqlCommand(numberEquipe, conn);
             var result = await cmd.ExecuteScalarAsync();
             return result != null ? Convert.ToInt32(result) : 0;
         }

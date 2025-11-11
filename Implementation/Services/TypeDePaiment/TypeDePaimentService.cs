@@ -1,40 +1,76 @@
-﻿using GestionPersonnel.Models.TypeDePaiment;
-using GestionPersonnel.Storages.TypeDePaimentStorages;
+﻿using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.TypeDePaiment;
+using Infrastructures.Storages.TypeDePaimentStorages;
 
-namespace GestionPersonnel.Services
+namespace Implementation.Services.TypeDePaiment
 {
-    public class TypeDePaiementService : ITypeDePaiementService
+    public class TypeDePaiementService(TypeDePaiementStorage typeDePaiementStorage) : ITypeDePaiementService
     {
-        private readonly TypeDePaiementStorage _typeDePaiementStorage;
 
-        public TypeDePaiementService(TypeDePaiementStorage typeDePaiementStorage)
+        public async Task<Result<List<TypeDePaiement>>> GetAllAsync()
         {
-            _typeDePaiementStorage = typeDePaiementStorage;
+            try
+            {
+                var items = await typeDePaiementStorage.GetAll();
+                return Result<List<TypeDePaiement>>.Success(items);
+            }
+            catch (Exception ex)
+            {
+                return Error.Exception(ex);
+            }
         }
 
-        public async Task<List<TypeDePaiement>> GetAllAsync()
+        public async Task<Result<TypeDePaiement>> GetByIdAsync(int id)
         {
-            return await _typeDePaiementStorage.GetAll();
+            try
+            {
+                var item = await typeDePaiementStorage.GetById(id);
+                return Result<TypeDePaiement>.Success(item);
+            }
+            catch (Exception ex)
+            {
+                return Error.Exception(ex);
+            }
         }
 
-        public async Task<TypeDePaiement?> GetByIdAsync(int id)
+        public async Task<Result<int>> AddAsync(TypeDePaiement typeDePaiement)
         {
-            return await _typeDePaiementStorage.GetById(id);
+            try
+            {
+                await typeDePaiementStorage.Add(typeDePaiement); 
+                return Result<int>.Success(typeDePaiement.TypePaiementID); 
+
+            }
+            catch (Exception ex)
+            {
+                return Error.Exception(ex);
+            }
         }
 
-        public async Task AddAsync(TypeDePaiement typeDePaiement)
+        public async Task<Result> UpdateAsync(TypeDePaiement typeDePaiement)
         {
-            await _typeDePaiementStorage.Add(typeDePaiement);
+            try
+            {
+                await typeDePaiementStorage.Update(typeDePaiement);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Error.Exception(ex);
+            }
         }
 
-        public async Task UpdateAsync(TypeDePaiement typeDePaiement)
+        public async Task<Result> DeleteAsync(int id)
         {
-            await _typeDePaiementStorage.Update(typeDePaiement);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            await _typeDePaiementStorage.Delete(id);
+            try
+            {
+                await typeDePaiementStorage.Delete(id);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Error.Exception(ex);
+            }
         }
     }
 }

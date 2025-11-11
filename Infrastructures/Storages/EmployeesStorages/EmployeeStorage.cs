@@ -1,25 +1,24 @@
-﻿using GestionPersonnel.Models.Employees;
-using System.Data.SqlClient;
+﻿using System.Data.SqlClient;
 using System.Data;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Dashboards;
+using Microsoft.Extensions.Configuration;
 
-namespace GestionPersonnel.Storages.EmployeesStorages
+namespace Infrastructures.Storages.EmployeesStorages
 {
-    public class EmployeStorage
+    public class EmployeStorage : IEmployeStorage
     {
         private readonly string _connectionString;
 
-        public EmployeStorage(string connectionString)
+        public EmployeStorage(IConfiguration configuration)
         {
-            _connectionString = connectionString;
+            _connectionString = configuration.GetConnectionString("DBConnection");
         }
+        string numberEquipe = @"SELECT COUNT(*) AS TotalEquipes
+FROM [db_aa9d4f_gestionpersonnel].[dbo].[Equipes];";
 
-        private const string _selectAllQuery = @"
-            SELECT E.EmployeID, E.Nom, E.Prenom, E.DateDeNaissance, E.NSecuriteSocial, E.Adresse, E.GroupSanguin, 
-                   E.NTelephone, E.FonctionID, E.DateEntree, E.DateSortie, E.SitiationFamiliale, 
-                   E.Photo, F.NomFonction
-            FROM Employes E
-            INNER JOIN Fonctions F ON E.FonctionID = F.FonctionID
-            WHERE E.status = 1";
+
+        
         private const string _selectByIdQuery = @"
             SELECT E.EmployeID, E.Nom, E.Prenom, E.DateDeNaissance, E.NSecuriteSocial, E.Adresse, E.GroupSanguin, 
                    E.NTelephone, E.FonctionID, E.DateEntree, E.DateSortie, E.SitiationFamiliale, 
@@ -28,8 +27,24 @@ namespace GestionPersonnel.Storages.EmployeesStorages
             INNER JOIN Fonctions F ON E.FonctionID = F.FonctionID
             WHERE E.EmployeID = @id";
         private const string _insertQuery = "INSERT INTO Employes (Nom, Prenom, DateDeNaissance, NSecuriteSocial, Adresse, GroupSanguin, NTelephone, FonctionID, DateEntree, DateSortie, SitiationFamiliale, Photo) VALUES (@Nom, @Prenom, @DateDeNaissance, @NSecuriteSocial, @Adresse, @GroupSanguin, @NTelephone, @FonctionID, @DateEntree, @DateSortie, @SitiationFamiliale, @Photo); SELECT SCOPE_IDENTITY();";
-        private const string _updateQuery = "UPDATE Employes SET Nom = @Nom, Prenom = @Prenom, DateDeNaissance = @DateDeNaissance, NSecuriteSocial = @NSecuriteSocial, Adresse = @Adresse, GroupSanguin = @GroupSanguin, NTelephone = @NTelephone, FonctionID = @FonctionID, DateEntree = @DateEntree, DateSortie = @DateSortie, SitiationFamiliale = @SitiationFamiliale, Photo = @Photo WHERE EmployeID = @EmployeID;";
-        private const string _deleteQuery = "UPDATE Employes SET status = 0, DateSortie = @DateSortie WHERE EmployeID = @EmployeID;";
+        private const string _updateQuery = @"
+            UPDATE Employes
+            SET 
+                Nom = @Nom,
+                Prenom = @Prenom,
+                DateDeNaissance = @DateDeNaissance,
+                NSecuriteSocial = @NSecuriteSocial,
+                Adresse = @Adresse,
+                GroupSanguin = @GroupSanguin,
+                NTelephone = @NTelephone,
+                FonctionID = @FonctionID,
+                Journee = @Journee,
+                DateEntree = @DateEntree,
+                DateSortie = @DateSortie,
+                SituationFamiliale = @SituationFamiliale,
+                Photo = @Photo
+            WHERE EmployeID = @EmployeID;
+        "; private const string _deleteQuery = "UPDATE Employes SET status = @Status, DateSortie = @DateSortie WHERE EmployeID = @EmployeID;";
 
         private const string _selectByFunctionIdQuery = @"
             SELECT E.EmployeID, E.Nom, E.Prenom, E.DateDeNaissance, E.NSecuriteSocial, E.Adresse, E.GroupSanguin, 
@@ -45,9 +60,36 @@ namespace GestionPersonnel.Storages.EmployeesStorages
     INNER JOIN Fonctions F ON E.FonctionID = F.FonctionID
     WHERE E.Nom = @Nom AND E.Prenom = @Prenom AND F.NomFonction = @NomFonction";
 
-        private static Employee GetEmployeFromDataRow(DataRow row)
+
+        private const string countNumberOfemployesbyFunctionQuery = @"  SELECT 
+    f.[NomFonction], 
+    e.[FonctionID], 
+    COUNT(*) AS NumberOfEmployees
+FROM 
+   [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e 
+INNER JOIN 
+    [db_aa9d4f_gestionpersonnel].[dbo].[Fonctions] f
+ON 
+    e.[FonctionID] = f.[FonctionID]
+ WHERE 
+        e.status = 1
+GROUP BY 
+    e.[FonctionID],f.[NomFonction] 
+    
+ORDER BY 
+    NumberOfEmployees DESC 
+";
+
+        private const string selectEmployesByStatusQuery = @"
+         SELECT *
+            FROM Employes E
+            INNER JOIN Fonctions F ON E.FonctionID = F.FonctionID
+            WHERE E.Status = @Status";
+
+
+        private static Employe GetEmployeFromDataRow(DataRow row)
         {
-            return new Employee
+            return new Employe
             {
                 EmployeID = (int)row["EmployeID"],
                 Nom = (string)row["Nom"],
@@ -57,31 +99,31 @@ namespace GestionPersonnel.Storages.EmployeesStorages
                 Adresse = (string)row["Adresse"],
                 GroupSanguin = (string)row["GroupSanguin"],
                 NTelephone = (string)row["NTelephone"],
-                FonctionID = Convert.ToInt32(row["FonctionID"]),
+                FonctionID = (int)row["FonctionID"],
                 DateEntree = (DateTime)row["DateEntree"],
-                DateSortie = row["DateSortie"] != DBNull.Value ? (DateTime)row["DateSortie"] : (DateTime?)null,
-                SitiationFamiliale = (string)row["SitiationFamiliale"],
+                DateSortie = row["DateSortie"] != DBNull.Value ? (DateTime)row["DateSortie"] : null,
+                SituationFamiliale = (string)row["SituationFamiliale"],
                 Photo = row["Photo"] as byte[],
-                FonctionName = row["NomFonction"].ToString()
-               
+                FonctionName = row["NomFonction"].ToString(),
+                Journee = row["Journee"] != DBNull.Value ? Convert.ToInt32(row["Journee"]) : 0,
+
+
+
             };
         }
 
-        public async Task<List<Employee>> GetAll()
+        public async Task<int> SelectCountEquipes()
         {
-            await using var connection = new SqlConnection(_connectionString);
-            SqlCommand cmd = new(_selectAllQuery, connection);
+            await using SqlConnection conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
 
-            DataTable dataTable = new();
-            SqlDataAdapter da = new(cmd);
+            await using SqlCommand cmd = new SqlCommand(numberEquipe, conn);
 
-            await connection.OpenAsync();
-            da.Fill(dataTable);
-
-            return (from DataRow row in dataTable.Rows select GetEmployeFromDataRow(row)).ToList();
+            return (int)(await cmd.ExecuteScalarAsync() ?? 0);
         }
+       
 
-        public async Task<Employee?> GetById(int id)
+        public async Task<Employe?> GetById(int id)
         {
             await using var connection = new SqlConnection(_connectionString);
 
@@ -97,7 +139,7 @@ namespace GestionPersonnel.Storages.EmployeesStorages
             return dataTable.Rows.Count == 0 ? null : GetEmployeFromDataRow(dataTable.Rows[0]);
         }
 
-        public async Task Add(Employee employe)
+        public async Task Add(Employe employe)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_insertQuery, connection);
@@ -111,7 +153,7 @@ namespace GestionPersonnel.Storages.EmployeesStorages
             cmd.Parameters.AddWithValue("@FonctionID", employe.FonctionID);
             cmd.Parameters.AddWithValue("@DateEntree", employe.DateEntree);
             cmd.Parameters.AddWithValue("@DateSortie", employe.DateSortie ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SitiationFamiliale);
+            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SituationFamiliale);
             cmd.Parameters.AddWithValue("@Photo", employe.Photo ?? (object)DBNull.Value);
 
             await connection.OpenAsync();
@@ -119,38 +161,55 @@ namespace GestionPersonnel.Storages.EmployeesStorages
             employe.EmployeID = Convert.ToInt32(id);
         }
 
-        public async Task Update(Employee employe)
+        public async Task Update(Employe employe)
         {
             await using var connection = new SqlConnection(_connectionString);
-            SqlCommand cmd = new(_updateQuery, connection);
-            cmd.Parameters.AddWithValue("@Nom", employe.Nom);
-            cmd.Parameters.AddWithValue("@Prenom", employe.Prenom);
-            cmd.Parameters.AddWithValue("@DateDeNaissance", employe.DateDeNaissance);
-            cmd.Parameters.AddWithValue("@NSecuriteSocial", employe.NSecuriteSocial);
-            cmd.Parameters.AddWithValue("@Adresse", employe.Adresse);
-            cmd.Parameters.AddWithValue("@GroupSanguin", employe.GroupSanguin);
-            cmd.Parameters.AddWithValue("@NTelephone", employe.NTelephone);
-            cmd.Parameters.AddWithValue("@FonctionID", employe.FonctionID);
-            cmd.Parameters.AddWithValue("@DateEntree", employe.DateEntree);
-            cmd.Parameters.AddWithValue("@DateSortie", employe.DateSortie ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SitiationFamiliale);
-            cmd.Parameters.AddWithValue("@Photo", employe.Photo ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@EmployeID", employe.EmployeID);
-
             await connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
+
+            // ✅ Use a transaction for safety
+            await using var transaction = await connection.BeginTransactionAsync();
+
+            
+            
+             await using SqlCommand cmd = new(_updateQuery, connection, (SqlTransaction)transaction);
+
+                // ✅ Parameter assignments
+                cmd.Parameters.AddWithValue("@Nom", employe.Nom);
+                cmd.Parameters.AddWithValue("@Prenom", employe.Prenom);
+                cmd.Parameters.AddWithValue("@DateDeNaissance", employe.DateDeNaissance);
+                cmd.Parameters.AddWithValue("@NSecuriteSocial", employe.NSecuriteSocial);
+                cmd.Parameters.AddWithValue("@Adresse", employe.Adresse);
+                cmd.Parameters.AddWithValue("@GroupSanguin", employe.GroupSanguin);
+                cmd.Parameters.AddWithValue("@NTelephone", employe.NTelephone);
+                cmd.Parameters.AddWithValue("@FonctionID", employe.FonctionID);
+                cmd.Parameters.AddWithValue("@Journee", employe.Journee);
+                cmd.Parameters.AddWithValue("@DateEntree", employe.DateEntree);
+                cmd.Parameters.AddWithValue("@DateSortie", employe.DateSortie ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@SituationFamiliale", employe.SituationFamiliale ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Photo", employe.Photo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@EmployeID", employe.EmployeID);
+                
+                // ✅ Execute update
+                await cmd.ExecuteNonQueryAsync();
+
+                // ✅ Commit transaction
+                await transaction.CommitAsync();
+            
         }
 
-        public async Task Delete(int id)
+        public async Task UpdateStatusofEmploye(int id,EmployeeStatus status)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_deleteQuery, connection);
             cmd.Parameters.AddWithValue("@EmployeID", id);
+            cmd.Parameters.AddWithValue("@Status", status);
             cmd.Parameters.AddWithValue("@DateSortie", DateTime.Now);
 
             await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
         }
+
+        
 
         public async Task<int> GetTotalNumberOfEmployees()
         {
@@ -201,7 +260,7 @@ namespace GestionPersonnel.Storages.EmployeesStorages
             }
         }
 
-        public async Task<List<Employee>> GetEmployeesByFunctionId(int fonctionId)
+        public async Task<List<Employe>> GetEmployeesByFunctionId(int fonctionId)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_selectByFunctionIdQuery, connection);
@@ -236,5 +295,64 @@ namespace GestionPersonnel.Storages.EmployeesStorages
             return Convert.ToInt32(result); // Return the EmployeeID
         }
 
+        /*public async Task<List<Employee>> GetEmployeesBystatus(EmployeeStatus status)
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            SqlCommand cmd = new(selectEmployesByStatusQuery, connection);
+
+            DataTable dataTable = new();
+            SqlDataAdapter da = new(cmd);
+
+            await connection.OpenAsync();
+            da.Fill(dataTable);
+
+            return (from DataRow row in dataTable.Rows select GetEmployeFromDataRow(row)).ToList();
+        }*/
+      
+         public async Task<List<Employe>> SelectEmployeesByStatus(EmployeeStatus status)
+           {
+               await using var connection = new SqlConnection(_connectionString);
+               await connection.OpenAsync();
+           
+               await using var cmd = new SqlCommand(selectEmployesByStatusQuery, connection);
+
+               cmd.Parameters.AddWithValue("@Status", (int)status);
+           
+               var dataTable = new DataTable();
+               using var da = new SqlDataAdapter(cmd);
+               da.Fill(dataTable);
+               
+               return (from DataRow row in dataTable.Rows
+                       select GetEmployeFromDataRow(row)).ToList();
+           }
+         
+
+
+        public async  Task<List<CountFunction>> SelectEmployeesCountByFunction()
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            SqlCommand cmd = new(countNumberOfemployesbyFunctionQuery, connection);
+
+            DataTable dataTable = new();
+            SqlDataAdapter da = new(cmd);
+
+            await connection.OpenAsync();
+            da.Fill(dataTable);
+
+            var result = new List<CountFunction>();
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                var countFunction = new CountFunction
+                {
+                    Name = (string)row["NomFonction"],
+                    FunctionId = (int)row["FonctionID"],
+                    Total = (int)row["NumberOfEmployees"]
+                };
+                result.Add(countFunction);
+            }
+
+            return result;
+        }
     }
 }

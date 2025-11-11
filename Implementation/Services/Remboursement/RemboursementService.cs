@@ -1,32 +1,40 @@
-﻿using GestionPersonnel.Storages.AvancesStorages;
-using Infrastructures.Domains.Models.Remboursements;
+﻿using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Remboursements;
 using Infrastructures.Storages.RemboursementsStorages;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Implementation.Services.Remboursement
 {
-    public class RemboursementService : IRemboursementService
+    public class RemboursementService(RemboursementStorage remboursementStorage) : IRemboursementService
     {
 
-        private readonly RemboursementStorage _remboursementStorage;
 
-        public RemboursementService(RemboursementStorage remboursementStorage)
+        public async Task<Result<bool>> AddAsync(RemboursementType remboursement)
         {
-            _remboursementStorage = remboursementStorage;
+            try
+            {
+                if (remboursement == null)
+                    return Result.Failure<bool>(Error.Validation("Remboursement cannot be null."));
+
+                await remboursementStorage.Add(remboursement);
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<bool>(Error.Exception(ex));
+            }
         }
 
-        public async Task AddAsync(RemboursementType remboursement)
+        public async Task<Result<List<RemboursementType>>> GetByEmployeIdInMonthAsync(int employeId, DateTime selectedMonth)
         {
-            await _remboursementStorage.Add(remboursement);
-        }
-
-        public async Task<List<RemboursementType>> SelectByEmployeIdInMonthasync(int employeId, DateTime selectedMonth)
-        {
-            return await _remboursementStorage.GetByEmployeIdInMonth(employeId, selectedMonth);  
+            try
+            {
+                var remboursements = await remboursementStorage.GetByEmployeIdInMonth(employeId, selectedMonth);
+                return Result.Success(remboursements);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<List<RemboursementType>>(Error.Exception(ex));
+            }
         }
 
 

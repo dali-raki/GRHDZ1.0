@@ -1,14 +1,14 @@
-﻿using GestionPersonnel.Models.Employe;
-using GestionPersonnel.Models.Equipe;
+﻿using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Equipe;
+using GrhDz.Domains.Models.EquipePaiment;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using GestionPersonnel.Models.EquipePaiment;
 
 
-namespace GestionPersonnel.Storages.EquipeStorages
+namespace Infrastructures.Storages.EquipesStorages
 {
-    public class EquipeStorage
+    public class EquipeStorage : IEquipeStorage
     {
         private readonly string _connectionString;
 
@@ -25,54 +25,24 @@ namespace GestionPersonnel.Storages.EquipeStorages
         private const string DeleteQuery = "UPDATE Equipes SET Status = 0 WHERE EquipeID = @EquipeID;";
         private const string UpdateChefEquipeQuery = "UPDATE Equipes SET ChefEquipeID = @ChefEquipeID WHERE EquipeID = @EquipeID;";
         private const string SelectEmployeesByEquipeIdQuery = @"
-        SELECT 
-            Emp.EmployeID, 
-            Emp.Nom, 
-            Emp.Prenom 
-        FROM Employes Emp
-        JOIN EmployeEquipes EE ON Emp.EmployeID = EE.EmployeID
+        SELECT  Emp.EmployeID,  Emp.Nom, Emp.Prenom FROM Employes Emp JOIN EmployeEquipes EE ON Emp.EmployeID = EE.EmployeID
         WHERE EE.EquipeID = @EquipeID";
-        // Méthode pour mapper une DataRow à un objet Equipe
-        private const string selectEquipSalairesandPostesWorking =
-            @"DECLARE @EquipeID INT =1 -- Replace <Your_EquipeID> with the desired team ID
 
+        private const string selectonfoequipe = @"
 SELECT 
+    E.EquipeID, 
+    E.NomEquipe, 
+    Emp.Nom AS ChefEquipeNom,
+    COUNT(CASE 
+            WHEN MONTH(P.Date) = @SelectedMonth AND YEAR(P.Date) = @SelectedYear THEN P.IdPosteComplete 
+            ELSE NULL 
+          END) AS NombreTotalDesPostes
+FROM Equipes E
+JOIN Employes Emp ON E.ChefEquipeID = Emp.EmployeID
+LEFT JOIN PosteComplete P ON E.EquipeID = P.IdEquipe
+WHERE E.Status = 1
+GROUP BY E.EquipeID, E.NomEquipe, Emp.Nom;";
 
-    CONCAT(emp.Nom, ' ', emp.Prenom) AS EmployeNomPrenom,
-    COUNT(DISTINCT ep.IdPosteComplete) AS TotalPostsEmploye -- Total posts worked by the employee
-FROM 
-    [db_aa9d4f_gestionpersonnel].[dbo].[Equipes] eq
-JOIN 
-    [db_aa9d4f_gestionpersonnel].[dbo].[EmployeEquipes] ee 
-    ON eq.EquipeID = ee.EquipeID
-JOIN 
-    [db_aa9d4f_gestionpersonnel].[dbo].[Employes] emp 
-    ON ee.EmployeID = emp.EmployeID
-LEFT JOIN 
-    [db_aa9d4f_gestionpersonnel].[dbo].[EmployePoste] ep 
-    ON emp.EmployeID = ep.IdEmploye
-LEFT JOIN 
-    [db_aa9d4f_gestionpersonnel].[dbo].[PosteComplete] pc 
-    ON ep.IdPosteComplete = pc.IdPosteComplete AND pc.IdEquipe = eq.EquipeID
-WHERE 
-    eq.EquipeID = @EquipeID
-GROUP BY 
-    eq.NomEquipe, emp.EmployeID, emp.Nom, emp.Prenom
-ORDER BY 
-    eq.NomEquipe, emp.EmployeID;
-	select 
-	eq.NomEquipe As NomEquipe,
-	count (*) As TotalePostes,
-	count (*)*10000  As SalaireTotale
-
-	from PosteComplete
-	JOIN 
-    [db_aa9d4f_gestionpersonnel].[dbo].[Equipes] eq
-    ON eq.EquipeID = @EquipeID
-
-	where IdEquipe=@EquipeID
-	GROUP BY 
-    eq.NomEquipe";
         private static Equipe GetEquipeFromDataRow(DataRow row)
         {
             return new Equipe
@@ -88,7 +58,7 @@ ORDER BY
         public async Task<List<Equipe>> GetAll()
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectAllQuery, connection);
+            await using var cmd = new SqlCommand(SelectAllQuery, connection);
 
             var dataTable = new DataTable();
             var da = new SqlDataAdapter(cmd);
@@ -103,7 +73,7 @@ ORDER BY
         public async Task<Equipe> GetById(int equipeId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectByIdQuery, connection);
+            await using var cmd = new SqlCommand(SelectByIdQuery, connection);
             cmd.Parameters.AddWithValue("@id", equipeId);
 
             var dataTable = new DataTable();
@@ -146,7 +116,7 @@ ORDER BY
         public async Task Update(Equipe equipe)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(UpdateQuery, connection);
+            await using var cmd = new SqlCommand(UpdateQuery, connection);
 
             cmd.Parameters.AddWithValue("@NomEquipe", equipe.NomEquipe);
             cmd.Parameters.AddWithValue("@ChefEquipeID", equipe.ChefEquipeID);
@@ -158,7 +128,7 @@ ORDER BY
         public async Task UpdateChefEquipeById(int equipeId, int chefEquipeId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(UpdateChefEquipeQuery, connection);
+            await using var cmd = new SqlCommand(UpdateChefEquipeQuery, connection);
 
             cmd.Parameters.AddWithValue("@EquipeID", equipeId);
             cmd.Parameters.AddWithValue("@ChefEquipeID", chefEquipeId);
@@ -171,7 +141,7 @@ ORDER BY
         public async Task Delete(int equipeId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(DeleteQuery, connection);
+            await using var cmd = new SqlCommand(DeleteQuery, connection);
             cmd.Parameters.AddWithValue("@EquipeID", equipeId);
 
             await connection.OpenAsync();
@@ -183,25 +153,10 @@ ORDER BY
             var selectedMonth = selectedDate.Month;
             var selectedYear = selectedDate.Year;
 
-            var query = @"
-SELECT 
-    E.EquipeID, 
-    E.NomEquipe, 
-    Emp.Nom AS ChefEquipeNom,
-    COUNT(CASE 
-            WHEN MONTH(P.Date) = @SelectedMonth AND YEAR(P.Date) = @SelectedYear THEN P.IdPosteComplete 
-            ELSE NULL 
-          END) AS NombreTotalDesPostes
-FROM Equipes E
-JOIN Employes Emp ON E.ChefEquipeID = Emp.EmployeID
-LEFT JOIN PosteComplete P ON E.EquipeID = P.IdEquipe
-WHERE E.Status = 1
-GROUP BY E.EquipeID, E.NomEquipe, Emp.Nom;";
-
             var resultList = new List<EquipesInfos>();
 
             await using var connection = new SqlConnection(_connectionString);
-            await using var cmd = new SqlCommand(query, connection);
+            await using var cmd = new SqlCommand(selectonfoequipe, connection);
 
             cmd.Parameters.Add(new SqlParameter("@SelectedMonth", SqlDbType.Int) { Value = selectedMonth });
             cmd.Parameters.Add(new SqlParameter("@SelectedYear", SqlDbType.Int) { Value = selectedYear });
@@ -229,7 +184,7 @@ GROUP BY E.EquipeID, E.NomEquipe, Emp.Nom;";
         public async Task<List<Employe>> GetEmployeesByEquipeIdAsync(int equipeId)
     {
         await using var connection = new SqlConnection(_connectionString);
-        using var cmd = new SqlCommand(SelectEmployeesByEquipeIdQuery, connection);
+        await using var cmd = new SqlCommand(SelectEmployeesByEquipeIdQuery, connection);
         cmd.Parameters.AddWithValue("@EquipeID", equipeId);
 
         var dataTable = new DataTable();
@@ -253,9 +208,9 @@ GROUP BY E.EquipeID, E.NomEquipe, Emp.Nom;";
         {
             var result = new List<EquipePaiment>();
 
-            using (var connection = new SqlConnection(_connectionString))
+           await using (var connection = new SqlConnection(_connectionString))
             {
-                using (var command = new SqlCommand("[dbo].[GetEquipeSalairesAndPostes]", connection))
+                await using (var command = new SqlCommand("[dbo].[GetEquipeSalairesAndPostes]", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@EquipeID", equipeID);
@@ -263,7 +218,7 @@ GROUP BY E.EquipeID, E.NomEquipe, Emp.Nom;";
 
                     await connection.OpenAsync();
 
-                    using (var reader = await command.ExecuteReaderAsync())
+                    await using (var reader = await command.ExecuteReaderAsync())
                     {
                         // First result set: Employee details and their total posts
                         while (await reader.ReadAsync())

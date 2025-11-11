@@ -1,12 +1,6 @@
-﻿using GestionPersonnel.Models.Primes;
-using Infrastructures.Domains.Models.Remboursements;
+﻿using GrhDz.Domains.Models.Primes;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructures.Storages.PrimesStorages
 {
@@ -26,7 +20,7 @@ namespace Infrastructures.Storages.PrimesStorages
         public async Task Add(PrimeType prime)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(InsertQuery, connection);
+            await using var cmd = new SqlCommand(InsertQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeId", prime.EmployeID);
             cmd.Parameters.AddWithValue("@Montant", prime.Montant);

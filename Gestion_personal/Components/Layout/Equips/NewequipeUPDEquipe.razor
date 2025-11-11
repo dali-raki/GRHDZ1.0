@@ -1,5 +1,18 @@
-﻿@rendermode InteractiveServer
+﻿@using GrhDz.Apps.Shared
+@using GrhDz.Domains.Models.Employees
+@using GrhDz.Domains.Models.EmplyeeEquipe
+@using GrhDz.Domains.Models.Equipe
+@using GrhDz.Domains.Models.Logs
+@using Implementation.Services.EmployeModel
+@using Implementation.Services.EquipeEmploye
+@using Implementation.Services.Equipes
+@using Implementation.Services.Users
+@rendermode InteractiveServer
 @inject UserSessionStateService UserSession
+@inject IEmployeService EmployeService
+@inject IEmployeeEquipeService EmployeeEquipeService
+@inject IEquipeService EquipeService
+
 
 @if (IsVisiblUpdateEquipe)
 {
@@ -33,7 +46,7 @@
                         <div class="form-group">
                             <label>Modifier le chef d'équipe</label>
                             <RadzenDropDown @bind-Value="selectedChefId"
-                                            Data="@employes"
+                                            Data="@listememployes"
                                             ValueProperty="EmployeID"
                                             Style="width: 100%;"
                                             Placeholder="-- Choisir le chef --"
@@ -92,19 +105,9 @@
             margin-bottom: 6px;
         }
     </style>
-}
 
-@using GestionPersonnel.Models.EmplyeeEquipe
-@using GestionPersonnel.Services
-@using Implementation.Services.Logs
-@using Infrastructures.Domains.Models.Logs
-@using global::Services.Interfaces
 
-@using Equipe = GestionPersonnel.Models.Equipe.Equipe
-@using Employe = GestionPersonnel.Models.Employe.Employe
-@inject IEmployeService EmployeService
-@inject IEmployeeEquipeService EmployeeEquipeService
-@inject IEquipeService EquipeService
+    }
 
 @code {
     [Parameter] public bool IsVisiblUpdateEquipe { get; set; }
@@ -112,9 +115,11 @@
     [Parameter] public EventCallback OnUpdate { get; set; }
     [Inject] private ILogsActionService logsActionService { get; set; }
     [Inject] private NavigationManager Navigation { get; set; }
-    private List<Employe> employes = new();
+    private Result<List<Employe>> employes ;
+    private List<Employe> listememployes = new();
     private List<Employe> allEmployees = new();
-    private List<Equipe> equipes = new();
+    private Result<List<Equipe>> equipesr;
+    private List<Equipe> equipes;
     private List<int> selectedMemberIds = new();
     private string selectedEquipeName;
     private int? selectedChefId;
@@ -123,16 +128,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        employes = await EmployeService.GetEmployeesAsync();
-        equipes = await EquipeService.GetAllEquipesAsync();
+        employes = await EmployeService.GetEmployeesByStatus(EmployeeStatus.Active);
+        equipesr = await EquipeService.GetAllEquipesAsync();
     }
 
     protected override async Task OnParametersSetAsync()
     {
         if (IsVisiblUpdateEquipe)
         {
-            employes = await EmployeService.GetEmployeesAsync();
-            equipes = await EquipeService.GetAllEquipesAsync();
+            employes = await EmployeService.GetEmployeesByStatus(EmployeeStatus.Active);
+            listememployes = employes.Value;
+            equipesr = await EquipeService.GetAllEquipesAsync();
         }
     }
 
@@ -146,13 +152,13 @@
 
             if (selectedEquipe != null)
             {
-                selectedEquipeName = selectedEquipe.NomEquipe;
-                selectedChefId = selectedEquipe.ChefEquipeID;
+                selectedEquipeName = selectedEquipe.Value.NomEquipe;
+                selectedChefId = selectedEquipe.Value.ChefEquipeID;
 
                 var members = await EmployeeEquipeService.GetEmployeesByEquipeIdAsync(selectedEquipeId.Value);
-                selectedMemberIds = members.Select(emp => emp.EmployeID).ToList();
+                selectedMemberIds = members.Value.Select(emp => emp.EmployeID).ToList();
 
-                allEmployees = employes;
+                allEmployees = employes.Value;
             }
         }
         else
@@ -160,7 +166,7 @@
             selectedEquipeName = null;
             selectedChefId = null;
             selectedMemberIds.Clear();
-            allEmployees = employes;
+            allEmployees = employes.Value;
         }
     }
 
@@ -201,7 +207,7 @@
             var existingMembers = await EmployeeEquipeService.GetEmployeesByEquipeIdAsync(selectedEquipeId.Value);
             var currentMemberIds = selectedMemberIds.ToHashSet();
 
-            foreach (var existingMember in existingMembers)
+            foreach (var existingMember in existingMembers.Value)
             {
                 if (!currentMemberIds.Contains(existingMember.EmployeID))
                     await EmployeeEquipeService.DeleteEmployeeEquipeAsync(existingMember.EmployeID);
@@ -209,7 +215,7 @@
 
             foreach (var employeId in selectedMemberIds)
             {
-                if (!existingMembers.Any(em => em.EmployeID == employeId))
+                if (!existingMembers.Value.Any(em => em.EmployeID == employeId))
                 {
                     var newEmployeeEquipe = new EmployeeEquipe
                     {
@@ -220,12 +226,12 @@
                 }
             }
 
-            var log = new LogActions
+            var log = new LogAction
             {
                 ActionType = ActionType.Update,
                 ActionDate = DateTime.Now,
                 Description = $"Modifier Équipe",
-                PerformedBy = UserSession.Name,
+                PerformedBy = UserSession.UserName,
             };
 
             await logsActionService.settLog(log);

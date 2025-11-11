@@ -1,11 +1,4 @@
-﻿@using GestionPersonnel.Models.SalairesBase
-@using GestionPersonnel.Models.TypeDePaiment
-@using GestionPersonnel.Models.Employe
-@using GestionPersonnel.Services
-@using global::Services.Interfaces
-@using Implementation.Services.SalaireBase
-@using Radzen
-@using Radzen.Blazor
+﻿
 
 @if (IsVisible)
 {
@@ -19,7 +12,7 @@
                     <form @onsubmit="HandleFormSubmit">
                         <div class="form-group">
                             <label>Choisir Employe</label>
-                            <RadzenDropDownDataGrid Data="@employes"
+                            <RadzenDropDownDataGrid Data="@listememployes"
                                                     @bind-Value="selectedEmployeId"
                                                     TextProperty="FullName"
                                                     ValueProperty="EmployeID"
@@ -73,64 +66,3 @@
     </div>
 }
 
-@code {
-    [Parameter] public bool IsVisible { get; set; }
-    [Parameter] public EventCallback OnClose { get; set; }
-
-    private List<Employe> employes;
-    private List<TypeDePaiement> typeDePaiements;
-    private int? selectedEmployeId;
-    private int? selectedTypePaiementId;
-    private string salaire;
-    private string fonction;
-    private Employe selectedEmploye;
-
-    [Inject] private IEmployeService EmployeService { get; set; }
-    [Inject] private ITypeDePaiementService TypeDePaiementService { get; set; }
-    [Inject] private ISalaireBaseService SalairesBaseService { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        employes = await EmployeService.GetEmployeesAsync();
-        typeDePaiements = await TypeDePaiementService.GetAllAsync();
-    }
-
-    private async Task HandleFormSubmit()
-    {
-        if (selectedEmployeId.HasValue && selectedTypePaiementId.HasValue && !string.IsNullOrEmpty(salaire))
-        {
-            var salairesBase = new SalairesBase
-            {
-                EmplyeId = selectedEmployeId.Value,
-                TypePaiementID = selectedTypePaiementId.Value,
-                SalaireBase = decimal.Parse(salaire),
-            };
-
-            await SalairesBaseService.Add(salairesBase);
-            ClosePopup();
-        }
-    }
-
-    private async Task OnEmployeeChange(ChangeEventArgs e)
-    {
-        if (e.Value != null && int.TryParse(e.Value.ToString(), out var id))
-        {
-            selectedEmployeId = id;
-            selectedEmploye = employes.FirstOrDefault(emp => emp.EmployeID == id);
-
-            if (selectedEmploye != null)
-            {
-                fonction = selectedEmploye.FonctionName;
-            }
-        }
-        else
-        {
-            fonction = string.Empty;
-        }
-    }
-
-    private void ClosePopup()
-    {
-        OnClose.InvokeAsync();
-    }
-}

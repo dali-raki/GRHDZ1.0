@@ -1,18 +1,15 @@
-﻿using GestionPersonnel.Models.Dettes;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
+using GrhDz.Domains.Models.Dettes;
 using Microsoft.Extensions.Configuration;
 
-namespace GestionPersonnel.Storages.DettesStorages
+namespace Infrastructures.Storages.DettesStorages
 {
-    public class DetteStorage
+    public class DetteStorage(IConfiguration configuration) : IDetteStorage
     {
-        private readonly string _connectionString;
+        private readonly string _connectionString = configuration.GetConnectionString("DBConnection") ?? throw new InvalidCastException("Connection string is missing or empty");
 
-        public DetteStorage(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DBConnection");
-        }
+      
 
         private const string SelectAllQuery = "SELECT * FROM Dettes";
         private const string SelectByIdQuery = "SELECT * FROM Dettes WHERE DetteID = @id";
@@ -37,7 +34,7 @@ namespace GestionPersonnel.Storages.DettesStorages
         public async Task<List<Dette>> GetAll()
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectAllQuery, connection);
+            await using var cmd = new SqlCommand(SelectAllQuery, connection);
 
             var dataTable = new DataTable();
             var da = new SqlDataAdapter(cmd);
@@ -90,7 +87,7 @@ namespace GestionPersonnel.Storages.DettesStorages
         public async Task<int> Add(Dette dette)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(InsertQuery, connection);
+            await using var cmd = new SqlCommand(InsertQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeID", dette.EmployeID);
             cmd.Parameters.AddWithValue("@Montant", dette.Montant);
@@ -109,7 +106,7 @@ namespace GestionPersonnel.Storages.DettesStorages
         public async Task Update(Dette dette)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(UpdateQuery, connection);
+            await using var cmd = new SqlCommand(UpdateQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeID", dette.EmployeID);
             cmd.Parameters.AddWithValue("@Montant", dette.Montant);
@@ -123,7 +120,7 @@ namespace GestionPersonnel.Storages.DettesStorages
         public async Task Delete(int detteId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(DeleteQuery, connection);
+            await using var cmd = new SqlCommand(DeleteQuery, connection);
             cmd.Parameters.AddWithValue("@DetteID", detteId);
 
             await connection.OpenAsync();
@@ -143,20 +140,11 @@ namespace GestionPersonnel.Storages.DettesStorages
 
                     await connection.OpenAsync();
 
-                    using (var reader = await cmd.ExecuteReaderAsync())
+                    await using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
                         {
-                            var paimentinfo = new PaimentsInfo
-                            {
-                                EmployeID = reader["EmployeID"] != DBNull.Value ? Convert.ToInt32(reader["EmployeID"]) : 0,  // Default to 0 if null
-                                Nom = reader["Nom"] != DBNull.Value ? reader["Nom"].ToString() : string.Empty,  // Default to empty string if null
-                                Prenom = reader["Prenom"] != DBNull.Value ? reader["Prenom"].ToString() : string.Empty,  // Default to empty string if null
-                                NomFonction = reader["Fonction"] != DBNull.Value ? reader["Fonction"].ToString() : string.Empty,  // Default to empty string if null
-                                TotaleDette = reader["TotaleDette"] != DBNull.Value ? Convert.ToDecimal(reader["TotaleDette"]) : 0m,  // Default to 0 if null
-                                MontantRetrait = reader["MontantRetrait"] != DBNull.Value ? Convert.ToDecimal(reader["MontantRetrait"]) : 0m,  // Default to 0 if null
-                                TotaleAvances = reader["TotaleAvances"] != DBNull.Value ? Convert.ToDecimal(reader["TotaleAvances"]) : 0m  // Default to 0 if null
-                            };
+                            var paimentinfo = PaimentsInfo(reader);
 
 
                             paimentsInfos.Add(paimentinfo);
@@ -167,12 +155,28 @@ namespace GestionPersonnel.Storages.DettesStorages
 
             return paimentsInfos;
         }
+
+        private static PaimentsInfo PaimentsInfo(SqlDataReader reader)
+        {
+            var paimentinfo = new PaimentsInfo
+            {
+                EmployeID = reader["EmployeID"] != DBNull.Value ? Convert.ToInt32(reader["EmployeID"]) : 0,  // Default to 0 if null
+                Nom = reader["Nom"] != DBNull.Value ? reader["Nom"].ToString() : string.Empty,  // Default to empty string if null
+                Prenom = reader["Prenom"] != DBNull.Value ? reader["Prenom"].ToString() : string.Empty,  // Default to empty string if null
+                NomFonction = reader["Fonction"] != DBNull.Value ? reader["Fonction"].ToString() : string.Empty,  // Default to empty string if null
+                TotaleDette = reader["TotaleDette"] != DBNull.Value ? Convert.ToDecimal(reader["TotaleDette"]) : 0m,  // Default to 0 if null
+                MontantRetrait = reader["MontantRetrait"] != DBNull.Value ? Convert.ToDecimal(reader["MontantRetrait"]) : 0m,  // Default to 0 if null
+                TotaleAvances = reader["TotaleAvances"] != DBNull.Value ? Convert.ToDecimal(reader["TotaleAvances"]) : 0m  // Default to 0 if null
+            };
+            return paimentinfo;
+        }
+
         public async Task<decimal> GetTotalDettes()
         {
             decimal totalDettes = 0;
 
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand("GetTotalDettes", connection)
+            await using var cmd = new SqlCommand("GetTotalDettes", connection)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -191,9 +195,9 @@ namespace GestionPersonnel.Storages.DettesStorages
 
         public async Task SetMonthlySalaries()
         {
-            using (var connection = new SqlConnection(_connectionString))
+           await using (var connection = new SqlConnection(_connectionString))
             {
-                using (var command = new SqlCommand("UpdateOrInsertSalairesForMonth", connection))
+                await  using (var command = new SqlCommand("UpdateOrInsertSalairesForMonth", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
 

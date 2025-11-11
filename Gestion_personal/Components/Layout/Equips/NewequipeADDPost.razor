@@ -1,11 +1,6 @@
-﻿@using GestionPersonnel.Services
-@using global::Services.Interfaces
-
-@inject IPosteService PosteService
-@inject IEquipeService EquipeService
-@inject IEmployeService EmployeService
+﻿
 @rendermode InteractiveServer
-@inject UserSessionStateService UserSession
+
 @if (IsVisibleAddPost)
 {
     <div class="modal" tabindex="-1" style="display: block;">

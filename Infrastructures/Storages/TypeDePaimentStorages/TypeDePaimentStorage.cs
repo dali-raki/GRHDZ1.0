@@ -1,21 +1,16 @@
-﻿using GestionPersonnel.Models.TypeDePaiment;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
 using System.Data;
+using GrhDz.Domains.Models.TypeDePaiment;
 
-namespace GestionPersonnel.Storages.TypeDePaimentStorages
+namespace Infrastructures.Storages.TypeDePaimentStorages
 {
-    public class TypeDePaiementStorage
+    public class TypeDePaiementStorage(IConfiguration configuration) : ITypeDePaiementStorage
     {
-        private readonly string _connectionString;
+        private readonly string _connectionString = configuration.GetConnectionString("DBConnection")?? throw new ArgumentNullException();
 
-        public TypeDePaiementStorage(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DBConnection");
-        }
 
         private const string _selectAllQuery = "SELECT * FROM TypesDePaiement";
-
         private const string _selectByIdQuery = "SELECT * FROM TypesDePaiement WHERE TypePaiementID = @id";
         private const string _insertQuery = "INSERT INTO TypesDePaiement (NomTypePaiement) VALUES (@NomTypePaiement); SELECT SCOPE_IDENTITY();";
         private const string _updateQuery = "UPDATE TypesDePaiement SET NomTypePaiement = @NomTypePaiement WHERE TypePaiementID = @TypePaiementID;";

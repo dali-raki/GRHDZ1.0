@@ -1,22 +1,12 @@
-﻿using GestionPersonnel.Storages.PointagesStorages;
-using Implementation.Services.ReadUSB;
-using Infrastructures.Domains.Models.CheckInOut;
+﻿using GrhDz.Domains.Models.CheckInOut;
 using Infrastructures.Storages.RecordStorages;
 using Infrastructures.Storages.TransferData;
-using Microsoft.AspNetCore.Components;
 
-namespace Infrastructures.Storages.ReadUSB
+namespace Implementation.Services.ReadUSB
 {
-    public class FileProcessingService : IFileProcessingService
+    public class FileProcessingService(ICheckInOutStorage checkInOutStorage, ITransferDataStorage transferDataStorage) : IFileProcessingService
     {
-        private readonly ICheckInOutStorage _checkInOutStorage;
-        private readonly ITransferDataStorage _transferDataStorage;
-        public FileProcessingService(ICheckInOutStorage checkInOutStorage,ITransferDataStorage transferDataStorage)
-        {
-            _checkInOutStorage = checkInOutStorage;
-            _transferDataStorage = transferDataStorage;
-        }
-
+  
         private List<CheckInOutRecord> ParseFileContent(string fileContent)
         {
             var records = new List<CheckInOutRecord>();
@@ -52,12 +42,12 @@ namespace Infrastructures.Storages.ReadUSB
         public async Task ProcessFile(string fileContent)
         {
             var records = ParseFileContent(fileContent);
-            await _checkInOutStorage.InsertRecords(records);
-            await _transferDataStorage.TransfererEmployees();
-            await _transferDataStorage.TransfererPointages();
-            await _transferDataStorage.CalculeCofficient();
-            await _transferDataStorage.InsertOrUpdateRapportsPointage();
-            await _transferDataStorage.InsertOrUpdateSalaires();
+            await checkInOutStorage.InsertRecords(records);
+            await transferDataStorage.TransfererEmployees();
+            await transferDataStorage.TransfererPointages();
+            await transferDataStorage.CalculeCofficient();
+            await transferDataStorage.InsertOrUpdateRapportsPointage();
+            await transferDataStorage.InsertOrUpdateSalaires();
         }
     }
 }

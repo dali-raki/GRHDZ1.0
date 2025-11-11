@@ -1,4 +1,5 @@
-﻿@if (isUpdateModalVisible)
+﻿@using Implementation.Services.Users
+@if (isUpdateModalVisible)
 {
     <div class="modal show d-block" tabindex="-1">
         <div class="modal-dialog">
@@ -26,27 +27,4 @@
     </div>
 }
 
-@code {
-    [Parameter] public Infrastructures.Domains.Models.User selectedUser { get; set; } = new();
-    [Inject] IUserService UserService { get; set; }
 
-    private bool isUpdateModalVisible = false;
-
-    private async Task UpdateUser()
-    {
-        await UserService.SetUserAsync(selectedUser);
-        isUpdateModalVisible = false;
-        //await RefreshUsers();
-    }
-    private void CloseUpdateModal()
-    {
-        isUpdateModalVisible = false;
-        StateHasChanged();
-    }
-
-    public void OpenUpdateModal()
-    {
-        isUpdateModalVisible = true;
-        StateHasChanged();
-    }
-}

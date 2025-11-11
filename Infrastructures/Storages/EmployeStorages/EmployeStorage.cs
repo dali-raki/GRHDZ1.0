@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
 using System.Data;
-using GestionPersonnel.Models.Employe;
-using Infrastructures.Domains.Models.Dashboard;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Dashboards;
 
 
 namespace Infrastructures.Storages.EmployeStorages
@@ -87,7 +87,7 @@ ORDER BY
 ";
 
 
-        public async Task<List<Countfunction>> GetNumberOfEmployeesByFunction()
+        public async Task<List<CountFunction>> GetNumberOfEmployeesByFunction()
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(countNumberOfemployesbyFunctionQuery, connection);
@@ -98,11 +98,11 @@ ORDER BY
             await connection.OpenAsync();
             da.Fill(dataTable);
 
-            var result = new List<Countfunction>();
+            var result = new List<CountFunction>();
 
             foreach (DataRow row in dataTable.Rows)
             {
-                var countFunction = new Countfunction
+                var countFunction = new CountFunction
                 {
                     Name = (string)row["NomFonction"],
                     FunctionId = (int)row["FonctionID"],
@@ -130,7 +130,7 @@ ORDER BY
                 FonctionID = Convert.ToInt32(row["FonctionID"]),
                 DateEntree = (DateTime)row["DateEntree"],
                 DateSortie = row["DateSortie"] != DBNull.Value ? (DateTime)row["DateSortie"] : (DateTime?)null,
-                SitiationFamiliale = (string)row["SitiationFamiliale"],
+                SituationFamiliale = (string)row["SitiationFamiliale"],
                 Photo = row["Photo"] as byte[],
                 FonctionName = row["NomFonction"].ToString(),
                 Journee = row["Journee"] != DBNull.Value ? (int)row["Journee"] : 0,
@@ -195,7 +195,7 @@ ORDER BY
             cmd.Parameters.AddWithValue("@FonctionID", employe.FonctionID);
             cmd.Parameters.AddWithValue("@DateEntree", employe.DateEntree);
             cmd.Parameters.AddWithValue("@DateSortie", employe.DateSortie ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SitiationFamiliale);
+            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SituationFamiliale);
             cmd.Parameters.AddWithValue("@Photo", employe.Photo ?? (object)DBNull.Value);
 
             await connection.OpenAsync();
@@ -217,7 +217,7 @@ ORDER BY
             cmd.Parameters.AddWithValue("@FonctionID", employe.FonctionID);
             cmd.Parameters.AddWithValue("@DateEntree", employe.DateEntree);
             cmd.Parameters.AddWithValue("@DateSortie", employe.DateSortie ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SitiationFamiliale);
+            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SituationFamiliale);
             cmd.Parameters.AddWithValue("@Photo", employe.Photo ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@EmployeID", employe.EmployeID);
             cmd.Parameters.AddWithValue("@Journee", employe.Journee);
@@ -237,7 +237,7 @@ ORDER BY
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task Return(int id)
+        public async Task<int> Return(int id)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_returnQuery, connection);
@@ -245,7 +245,8 @@ ORDER BY
             cmd.Parameters.AddWithValue("@DateEntree ", DateTime.Now);
 
             await connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
+            int affectedRows = await cmd.ExecuteNonQueryAsync();
+            return affectedRows;
         }
 
 

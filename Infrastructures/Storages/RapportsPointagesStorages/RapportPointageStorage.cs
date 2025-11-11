@@ -1,10 +1,10 @@
-﻿using GestionPersonnel.Models.RapportPointage;
+﻿using GrhDz.Domains.Models.RapportPointage;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace GestionPersonnel.Storages.RapportPointageStorages
+namespace Infrastructures.Storages.RapportsPointagesStorages
 {
-    public class RapportPointageStorage
+    public class RapportPointageStorage : IRapportPointageStorage
     {
         private readonly string _connectionString;
 
@@ -44,7 +44,7 @@ namespace GestionPersonnel.Storages.RapportPointageStorages
         public async Task<List<RapportPointage>> GetAll()
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectAllQuery, connection);
+            await using var cmd = new SqlCommand(SelectAllQuery, connection);
 
             var dataTable = new DataTable();
             var da = new SqlDataAdapter(cmd);
@@ -58,7 +58,7 @@ namespace GestionPersonnel.Storages.RapportPointageStorages
         public async Task<RapportPointage> GetById(int rapportId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectByIdQuery, connection);
+            await using var cmd = new SqlCommand(SelectByIdQuery, connection);
             cmd.Parameters.AddWithValue("@id", rapportId);
 
             var dataTable = new DataTable();
@@ -76,7 +76,7 @@ namespace GestionPersonnel.Storages.RapportPointageStorages
         public async Task<int> Add(RapportPointage rapportPointage)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(InsertQuery, connection);
+            await using var cmd = new SqlCommand(InsertQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeID", rapportPointage.EmployeID);
             cmd.Parameters.AddWithValue("@EquipeID", rapportPointage.EquipeID);
@@ -92,7 +92,7 @@ namespace GestionPersonnel.Storages.RapportPointageStorages
         public async Task Update(RapportPointage rapportPointage)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(UpdateQuery, connection);
+            await using var cmd = new SqlCommand(UpdateQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeID", rapportPointage.EmployeID);
             cmd.Parameters.AddWithValue("@EquipeID", rapportPointage.EquipeID);
@@ -108,7 +108,7 @@ namespace GestionPersonnel.Storages.RapportPointageStorages
         public async Task Delete(int rapportId)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(DeleteQuery, connection);
+            await using var cmd = new SqlCommand(DeleteQuery, connection);
             cmd.Parameters.AddWithValue("@RapportID", rapportId);
 
             await connection.OpenAsync();
@@ -117,7 +117,7 @@ namespace GestionPersonnel.Storages.RapportPointageStorages
         public async Task<int> GetTotalDaysByMonth(int employeId, DateTime monthYear)
         {
             await using var connection = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(SelectTotalDaysByMonthQuery, connection);
+            await using var cmd = new SqlCommand(SelectTotalDaysByMonthQuery, connection);
 
             cmd.Parameters.AddWithValue("@EmployeID", employeId);
             cmd.Parameters.AddWithValue("@Year", monthYear.Year);

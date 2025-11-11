@@ -1,10 +1,4 @@
-﻿@using GestionPersonnel.Services
-@using Implementation.Services.Remboursement
-@using global::Services.Interfaces
-@inject IEmployeService EmployeService
-@inject IDetteService DetteService
-@inject IAvanceService AvanceService
-@inject IRemboursementService remboursementService
+﻿
 
 @if (IsVisibleFicheAvanceDette)
 {
@@ -22,17 +16,17 @@
         <div class="modal-dialog" style="width:900px">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Historique de Dette et Avance et Remboursement</h5>
+                    <h5 class="modal-title">Historique de Dette et AvanceModel et Remboursement</h5>
                   
                 </div>
 
 
                 <RadzenTabs RenderMode="TabRenderMode.Client" @bind-SelectedIndex=@selectedIndex>
     <Tabs>
-                        <RadzenTabsItem Text="Avances">
-                        @if (avances != null && avances.Count > 0)
+                        <RadzenTabsItem Text="AvanceModels">
+                        @if (avances != null && avances.Value.Count > 0)
                         {
-                            var totalAvance = avances.Sum(a => a.Montant);
+                            var totalAvance = avances.Value.Sum(a => a.Montant);
                             <div style="overflow-y: auto; max-height: 200px;">
                                 <table class="table">
                                     <thead>
@@ -43,7 +37,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var avance in avances)
+                                        @foreach (var avance in avances.Value)
                                         {
                                             <tr>
                                                 <td>@avance.Date.ToString("yyyy-MM-dd")</td>
@@ -65,9 +59,9 @@
                         }
         </RadzenTabsItem>
                         <RadzenTabsItem Text="Dettes">
-                        @if (dettes != null && dettes.Count > 0)
+                        @if (dettes != null && dettes.Value.Count > 0)
                         {
-                            var totalDette = dettes.Sum(d => d.Montant);
+                            var totalDette = dettes.Value.Sum(d => d.Montant);
                             <div style="overflow-y: auto; max-height: 200px;">
                                 <table class="table">
                                     <thead>
@@ -78,7 +72,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var dette in dettes)
+                                        @foreach (var dette in dettes.Value)
                                         {
                                             <tr>
                                                 <td>@dette.Date.ToString("yyyy-MM-dd")</td>
@@ -100,9 +94,9 @@
         </RadzenTabsItem>
                         <RadzenTabsItem Text="Remboursements">
 
-                        @if (remboursements != null && remboursements.Count > 0)
+                        @if (remboursements != null && remboursements.Value.Count > 0)
                         {
-                            var totalDette = remboursements.Sum(d => d.Montant);
+                            var totalDette = remboursements.Value.Sum(d => d.Montant);
                             <div style="overflow-y: auto; max-height: 200px;">
                                 <table class="table">
                                     <thead>
@@ -113,7 +107,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var remboursement in remboursements)
+                                        @foreach (var remboursement in remboursements.Value)
                                         {
                                             <tr>
                                                 <td>@remboursement.Date.ToString("yyyy-MM-dd")</td>
@@ -137,14 +131,14 @@
 </RadzenTabs>
 
 
-            @*     <!-- Tables for Avance and Dette -->
+            @*     <!-- Tables for AvanceModel and Dette -->
                 <div class="modal-body d-flex; flex-direction: column; justify-content-between gap-4">
-                    <!-- Left Table: Avance -->
+                    <!-- Left Table: AvanceModel -->
                     <div class="table-container left-table w-100">
-                        <h4 style="text-align:left;margin-left:10px;">Avance</h4>
+                        <h4 style="text-align:left;margin-left:10px;">AvanceModel</h4>
                         @if (avances != null && avances.Count > 0)
                         {
-                            var totalAvance = avances.Sum(a => a.Montant);
+                            var totalAvanceModel = avances.Sum(a => a.Montant);
                             <div style="overflow-y: auto; max-height: 200px;">
                                 <table class="table">
                                     <thead>
@@ -167,7 +161,7 @@
                                     <tfoot>
                                         <tr>
                                             <td><strong>Total</strong></td>
-                                            <td><strong>@totalAvance</strong></td>
+                                            <td><strong>@totalAvanceModel</strong></td>
                                             <td><strong></strong></td>
                                         </tr>
                                     </tfoot>

@@ -1,52 +1,5 @@
-﻿@using GestionPersonnel.Models.Fonctions
-@using GestionPersonnel.Services
-@using Implementation.Services.Logs
-@using Infrastructures.Domains.Models.Logs
-@inject IFonctionService FonctionService
-@inject UserSessionStateService UserSession
-@code {
-    [Parameter] public bool IsVisibleAddFunction { get; set; }
-    [Parameter] public EventCallback OnClose { get; set; }
-    [Parameter] public EventCallback OnSave { get; set; }
-    [Inject] private ILogsActionService logsActionService { get; set; }
-    private string FonctionName;
+﻿
 
-
-    private void Hide_Popup_AddFunction()
-    {
-        FonctionName = string.Empty; 
-        OnClose.InvokeAsync();
-    }
-
-    private async Task HandleSave()
-    {
-        var newFonction = new Fonction
-            {
-                NomFonction = FonctionName
-            };
-
-        try
-        {
-            await FonctionService.AddAsync(newFonction);
-            await OnSave.InvokeAsync(newFonction);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error saving fonction: " + ex.Message);
-        }
-        var log = new LogActions
-        {
-            ActionType = ActionType.Insert,
-            ActionDate = DateTime.Now,
-            Description = $"Ajouter fonction",
-            PerformedBy = UserSession.Name,
-          
-        };
-        await logsActionService.settLog(log);
-
-        Hide_Popup_AddFunction();
-    }
-}
 
 
 @if (IsVisibleAddFunction)

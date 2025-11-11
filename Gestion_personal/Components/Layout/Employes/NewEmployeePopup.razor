@@ -1,8 +1,4 @@
-﻿@using GestionPersonnel.Services
-@using global::Services.Interfaces
-@inject IEmployeService EmployeService
-@inject IFonctionService FonctionService
-
+﻿
 @if (IsVisibleAddEmploye)
 {
 
@@ -78,9 +74,9 @@
     <label for="FonctionID">Fonction:</label>
     <select id="FonctionID" @bind="Employee.FonctionID" class="form-control" required>
         <option value="">-- Select Fonction --</option>
-        @if (fonctions != null && fonctions.Any())
+        @if (fonctions.Value != null && fonctions.Value.Any())
         {
-            @foreach (var fonction in fonctions)
+            @foreach (var fonction in fonctions.Value)
             {
                 <option value="@fonction.FonctionID">@fonction.NomFonction</option>
             }
@@ -101,8 +97,8 @@
                     <input id="NTelephone" type="text" @bind="Employee.NTelephone" class="form-control" required />
                 </div>
                 <div class="form-group">
-                    <label for="SitiationFamiliale">Situation Familiale:</label> 
-                    <select id="SitiationFamiliale" @bind="Employee.SitiationFamiliale" class="form-control" required>
+                    <label for="SitiationFamiliale">Situation Familiale:</label>
+                                <select id="SitiationFamiliale" @bind="Employee.SituationFamiliale" class="form-control" required>
                         <option value="">-- Select Situation Type --</option>
                         <option value="Célibataire">Célibataire</option>
                         <option value="Marié">Marié</option>

@@ -1,5 +1,7 @@
-﻿using GestionPersonnel.Models.Employe;
-using GestionPersonnel.Models.Fonctions;
+﻿using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Fonctions;
+using Implementation.Services.Fonctions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
@@ -10,8 +12,9 @@ public partial class NewEmployeePopup
     [Parameter] public bool IsVisibleAddEmploye { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<Employe> OnSave { get; set; }
-    [Parameter] public Employe Employee { get; set; } = new Employe();
-    private List<Fonction> fonctions;
+    [Inject] IFonctionService fonctionService { get; set; }
+    [Parameter] public Employe Employee { get; set; } = new ();
+    private Result<List<Fonction>> fonctions;
     private bool isSubmitting;
     private string errorMessage;
 
@@ -25,7 +28,7 @@ public partial class NewEmployeePopup
     {
         if (IsVisibleAddEmploye)
         {
-            fonctions = await FonctionService.GetAllAsync();
+            fonctions = await fonctionService.GetAllAsync();
         }
     }
 

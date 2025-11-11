@@ -1,18 +1,18 @@
 using Gestion_personal.Components.Layout.Dettes;
-using Gestion_personal.Services;
-using GestionPersonnel.Models.Dettes;
-using GestionPersonnel.Services;
+using GrhDz.Apps.Dettes;
+using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Dettes;
+using Implementation.Services.Users;
 using Microsoft.AspNetCore.Components;
 
 namespace Gestion_personal.Components.Pages;
 
 public partial class DettePage
 {
-	[Inject] public IDetteService detteService { get; set; }
-    [Inject]
-    UserSessionStateService UserSession { get; set; } = null;
+    [Inject] public IDetteService detteService { get; set; } = default!;
+    [Inject] UserSessionStateService UserSession { get; set; } = null;
     [Inject] NavigationManager Nav { get; set; }
-    private List<PaimentsInfo> paimentsInfos;
+    private Result<List<PaimentsInfo>> paimentsInfos;
 	private List<PaimentsInfo> filteredPaimentsInfos = new List<PaimentsInfo>();
 	private bool isVisibleADDDette = false;
 	private bool isVisibleADDAvance = false;
@@ -33,7 +33,7 @@ public partial class DettePage
             Nav.NavigateTo("/", forceLoad: true);
         }
         await LoadDette();
-		filteredPaimentsInfos = paimentsInfos;
+		filteredPaimentsInfos = paimentsInfos.Value;
 
 	}
 
@@ -44,7 +44,7 @@ public partial class DettePage
 		try
 		{
 			paimentsInfos = await detteService.GetEmployeeDebtDetailsAsync();
-			filteredPaimentsInfos = paimentsInfos;
+			filteredPaimentsInfos = paimentsInfos.Value;
 		}
 		catch (Exception ex)
 		{
@@ -115,11 +115,11 @@ public partial class DettePage
 
 		if (string.IsNullOrWhiteSpace(searchTerm))
 		{
-			filteredPaimentsInfos = paimentsInfos;
+			filteredPaimentsInfos = paimentsInfos.Value;
 		}
 		else
 		{
-			filteredPaimentsInfos = paimentsInfos.Where(info => info.NomFonction.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+			filteredPaimentsInfos = paimentsInfos.Value.Where(info => info.NomFonction.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
 														info.Nom.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
 														info.Prenom.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
 														).ToList();

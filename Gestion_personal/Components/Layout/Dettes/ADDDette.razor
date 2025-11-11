@@ -1,9 +1,11 @@
-﻿@using GestionPersonnel.Models.Dettes
-@using GestionPersonnel.Services
-@using global::Services.Interfaces
-@inject IEmployeService EmployeService
-@inject IDetteService DetteService
-@inject IDetteRestantService DetteRestantService
+﻿@using GrhDz.Apps.Dettes
+@using GrhDz.Apps.Shared
+@using GrhDz.Domains.Models.Dettes
+@using GrhDz.Domains.Models.Employees
+@using Implementation.Services.Employees
+@using Implementation.Services.EmployeModel
+
+
 
 @if (IsVisibleDette)
 {
@@ -18,7 +20,7 @@
                     <form @onsubmit="AddDette">
                         <div class="form-group">
                             <label>Employes</label>
-                            <RadzenDropDownDataGrid Data="@employes"
+                            <RadzenDropDownDataGrid Data="@listemployes"
                                                     @bind-Value="selectedEmployeId"
                                                     TextProperty="FullName"
                                                     ValueProperty="EmployeID"
@@ -55,14 +57,19 @@
     [Parameter] public bool IsVisibleDette { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnLoad { get; set; }
+    [Inject] private IEmployeService EmployeService { get; set; }
+    [Inject] private IDetteService DetteService { get; set; }
+    [Inject] private IDetteRestantService DetteRestantService { get; set; }
 
-    private List<Employe> employes;
+    private Result<List<Employe>> employes;
+    private List<Employe> listemployes;
     private int selectedEmployeId;
     private decimal montantDette;
 
     protected override async Task OnInitializedAsync()
     {
-        employes = await EmployeService.GetEmployeesAsync();
+        employes = await EmployeService.GetEmployeesByStatus(EmployeeStatus.Active);
+        listemployes = employes.Value;
     }
 
     private void Hide_Popup_AddDette()

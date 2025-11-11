@@ -1,7 +1,6 @@
 ﻿using System.Data.SqlClient;
-using Infrastructures.Domains.Models.CheckInOut;
+using GrhDz.Domains.Models.CheckInOut;
 using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 
 namespace Infrastructures.Storages.RecordStorages
 {

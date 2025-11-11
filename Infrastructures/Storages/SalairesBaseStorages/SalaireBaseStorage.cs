@@ -1,11 +1,11 @@
-﻿using GestionPersonnel.Models.SalairesBase;
+﻿using GrhDz.Domains.Models.SalairesBase;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace GestionPersonnel.Storages.SalairesBaseStorages
+namespace Infrastructures.Storages.SalairesBaseStorages
 {
-    public class SalaireBaseStorage
+    public class SalaireBaseStorage : ISalaireBaseStorage
     {
         private readonly string _connectionString;
 

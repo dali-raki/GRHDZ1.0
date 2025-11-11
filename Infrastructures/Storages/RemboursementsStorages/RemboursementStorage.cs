@@ -1,14 +1,7 @@
-﻿using GestionPersonnel.Models.Avances;
-using GestionPersonnel.Models.Dettes;
-using Infrastructures.Domains.Models.Remboursements;
+﻿using GrhDz.Domains.Models.Remboursements;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructures.Storages.RemboursementsStorages
 {

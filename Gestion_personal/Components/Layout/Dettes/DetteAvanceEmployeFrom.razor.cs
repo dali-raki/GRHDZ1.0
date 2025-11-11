@@ -1,7 +1,12 @@
-using GestionPersonnel.Models.Avances;
-using GestionPersonnel.Models.Dettes;
-using GestionPersonnel.Models.Employe;
-using Infrastructures.Domains.Models.Remboursements;
+using GrhDz.Apps.Avances;
+using GrhDz.Apps.Dettes;
+using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Avances;
+using GrhDz.Domains.Models.Dettes;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Remboursements;
+using Implementation.Services.Avance;
+using Implementation.Services.Remboursement;
 using Microsoft.AspNetCore.Components;
 
 namespace Gestion_personal.Components.Layout.Dettes
@@ -13,11 +18,14 @@ namespace Gestion_personal.Components.Layout.Dettes
 		[Parameter] public EventCallback OnClose { get; set; }
 		[Parameter] public int EmployeID { get; set; }
         [Parameter] public DateTime Date { get; set; }
+		[Inject] private IAvanceService AvanceService { get; set; }
+		[Inject] private IDetteService DetteService { get; set; }
+		[Inject] private IRemboursementService remboursementService { get; set; }
 
         private List<Employe> employes;
-		private List<Avance> avances;
-		private List<Dette> dettes;
-		private List<RemboursementType> remboursements;
+		private Result<List<AvanceModel>> avances;
+		private Result<List<Dette>> dettes;
+		private Result<List<RemboursementType>> remboursements;
         int selectedIndex = 0;
 
         protected override async Task OnParametersSetAsync()
@@ -32,9 +40,9 @@ namespace Gestion_personal.Components.Layout.Dettes
 		{
 			try
 			{
-				avances = await AvanceService.GetByEmployeIdAsync(EmployeID, Date);
+				avances = await AvanceService.GeAvanceByEmployeId(EmployeID, Date);
 				dettes = await DetteService.GetByEmployeIdAsync(EmployeID, Date);
-                remboursements = await remboursementService.SelectByEmployeIdInMonthasync(EmployeID, Date);
+                remboursements = await remboursementService.GetByEmployeIdInMonthAsync(EmployeID, Date);
 
             }
 			catch (Exception ex)

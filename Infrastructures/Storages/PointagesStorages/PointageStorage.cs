@@ -1,11 +1,11 @@
-﻿using GestionPersonnel.Models.Pointage;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
 using System.Data;
+using GrhDz.Domains.Models.Pointages;
 
-namespace GestionPersonnel.Storages.PointagesStorages
+namespace Infrastructures.Storages.PointagesStorages
 {
-    public class PointageStorage
+    public class PointageStorage : IPointageStorage
     {
         private readonly string _connectionString;
 
@@ -62,6 +62,66 @@ WHERE
     AND e.Status = 1;
 ";
 
+        private const string _selectByDateQuery2 = @"
+WITH liste AS (
+    SELECT * 
+    FROM Pointage 
+    WHERE Date = @Date
+)
+SELECT DISTINCT
+    p.*,  
+    e.Nom AS EmployeNom, 
+    e.Prenom AS EmployePrenom, 
+    ISNULL(f.NomFonction, 'Non défini') AS FonctionNom,
+    ISNULL(c.JourneeCoefficient, 0.0) AS JourneeCoefficient,
+    ISNULL(c.HeuresSupplementairesCoefficient, 0.0) AS HeuresSupplementairesCoefficient,
+    CAST(ISNULL((e.journee / 8.0) * p.HeuresTravaillees, 0.0) AS FLOAT) AS journee
+FROM 
+    liste AS p
+INNER JOIN 
+    [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e ON p.EmployeID = e.EmployeID
+INNER JOIN 
+    [db_aa9d4f_gestionpersonnel].[dbo].[Fonctions] f ON e.FonctionID = f.FonctionID
+INNER JOIN 
+    [db_aa9d4f_gestionpersonnel].[dbo].[CoefficientsTravail] c 
+        ON c.EmployeID = p.EmployeID AND c.Date = @Date
+WHERE 
+    p.Date = @Date
+    AND e.Status = 1
+ORDER BY 
+    e.Nom, e.Prenom
+OFFSET @Offset ROWS
+FETCH NEXT @PageSize ROWS ONLY;";
+
+
+
+        private const string _selectWithCoefficientsQuery = @"
+            SELECT
+                pointage.PointageID,
+                pointage.EmployeID,
+                pointage.Date,
+                pointage.HeureEntree,
+                pointage.HeureSortie,
+                pointage.HeuresTravaillees,
+                pointage.Remarque,
+                cof.JourneeCoefficient,
+                cof.HeuresSupplementairesCoefficient,
+                  e.Nom AS EmployeNom, 
+                e.Prenom AS EmployePrenom, 
+                f.NomFonction AS FonctionNom
+            FROM
+                Pointage pointage
+             JOIN
+                CoefficientsTravail cof
+            ON
+                pointage.EmployeID = cof.EmployeID
+                AND pointage.Date = cof.Date
+            JOIN 
+                [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e ON pointage.EmployeID = e.EmployeID
+            JOIN 
+                [db_aa9d4f_gestionpersonnel].[dbo].[Fonctions] f ON e.FonctionID = f.FonctionID;
+        ";
+
         private static Pointage GetPointageFromDataRow(DataRow row)
         {
             return new Pointage
@@ -101,7 +161,7 @@ WHERE
             return (from DataRow row in dataTable.Rows select GetPointageFromDataRow(row)).ToList();
         }
 
-        public async Task<List<Pointage>> GetPointagesByDateAsync(DateTime date)
+        /*public async Task<List<Pointage>> GetPointagesByDateAsync(DateTime date)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_selectByDateQuery, connection);
@@ -109,7 +169,22 @@ WHERE
 
             DataTable dataTable = new();
             SqlDataAdapter da = new(cmd);
+            cmd.CommandTimeout = 120;
+            await connection.OpenAsync().ConfigureAwait(false);
+            da.Fill(dataTable);
 
+            return (from DataRow row in dataTable.Rows select GetPointageFromDataRow(row)).ToList();
+        }*/
+        public async Task<List<Pointage>> GetPointagesByDateAsync(DateTime date)
+        {
+
+            await using var connection = new SqlConnection(_connectionString);
+            SqlCommand cmd = new(_selectByDateQuery, connection);
+            cmd.Parameters.AddWithValue("@Date", date);
+
+            DataTable dataTable = new();
+            SqlDataAdapter da = new(cmd);
+            cmd.CommandTimeout = 120;
             await connection.OpenAsync().ConfigureAwait(false);
             da.Fill(dataTable);
 
@@ -174,32 +249,23 @@ WHERE
         }
 
 
-        private const string _selectWithCoefficientsQuery = @"
-            SELECT
-                pointage.PointageID,
-                pointage.EmployeID,
-                pointage.Date,
-                pointage.HeureEntree,
-                pointage.HeureSortie,
-                pointage.HeuresTravaillees,
-                pointage.Remarque,
-                cof.JourneeCoefficient,
-                cof.HeuresSupplementairesCoefficient,
-                  e.Nom AS EmployeNom, 
-                e.Prenom AS EmployePrenom, 
-                f.NomFonction AS FonctionNom
-            FROM
-                Pointage pointage
-             JOIN
-                CoefficientsTravail cof
-            ON
-                pointage.EmployeID = cof.EmployeID
-                AND pointage.Date = cof.Date
-            JOIN 
-                [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e ON pointage.EmployeID = e.EmployeID
-            JOIN 
-                [db_aa9d4f_gestionpersonnel].[dbo].[Fonctions] f ON e.FonctionID = f.FonctionID;
-        ";
+
+        public async Task<List<Pointage>> GetAllWithCoefficients()
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            SqlCommand cmd = new(_selectWithCoefficientsQuery, connection);
+
+            DataTable dataTable = new();
+            SqlDataAdapter da = new(cmd);
+
+            connection.Open();
+            da.Fill(dataTable);
+
+            return (from DataRow row in dataTable.Rows select GetPointageWithCoefficientsFromDataRow(row)).ToList();
+        }
+
+
+
 
         private static Pointage GetPointageWithCoefficientsFromDataRow(DataRow row)
         {
@@ -217,24 +283,12 @@ WHERE
                 HeuresSupplementairesCoefficient = row["HeuresSupplementairesCoefficient"] == DBNull.Value
                     ? 0m
                     : (decimal)row["HeuresSupplementairesCoefficient"],
-                NomEmploye = row["EmployeNom"] == DBNull.Value ? null : (string)row["EmployeNom"],
+                //NomEmploye = row["EmployeNom"] == DBNull.Value ? null : (string)row["EmployeNom"],
                 PrenomEmploye = row["EmployePrenom"] == DBNull.Value ? null : (string)row["EmployePrenom"],
                 NomFonction = row["FonctionNom"] == DBNull.Value ? null : (string)row["FonctionNom"]
             };
         }
 
-        public async Task<List<Pointage>> GetAllWithCoefficients()
-        {
-            await using var connection = new SqlConnection(_connectionString);
-            SqlCommand cmd = new(_selectWithCoefficientsQuery, connection);
-
-            DataTable dataTable = new();
-            SqlDataAdapter da = new(cmd);
-
-            connection.Open();
-            da.Fill(dataTable);
-
-            return (from DataRow row in dataTable.Rows select GetPointageWithCoefficientsFromDataRow(row)).ToList();
-        }
+      
     }
 }

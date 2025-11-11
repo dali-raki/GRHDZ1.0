@@ -1,0 +1,17 @@
+﻿using GrhDz.Domains.Models.Salaires;
+
+namespace GrhDz.Apps.Salaires
+{
+    public interface ISalaireService
+    {
+        Task<List<Salaire>> GetAllAsync();
+        Task <List<SalaireDetail>> GetSalaireDetails();
+        Task<Salaire?> GetByIdAsync(int id);
+        Task AddAsync(Salaire salaire);
+        Task UpdateAsync(Salaire salaire);
+        Task DeleteAsync(int id);
+        Task<List<SalaireDetail>> GetSalariesByMonthAsync(DateTime mois);
+        Task UpdateDetteAsync(int employeeid, decimal dette, DateTime mois);
+        Task<int> SetMonthlySalariesAsync();
+    }
+}

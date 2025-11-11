@@ -1,11 +1,4 @@
-﻿@using Implementation.Services.Logs
-@using Infrastructures.Domains.Models.Logs
-@inject IJSRuntime JSRuntime
-@inject NavigationManager NavigationManager
-@inject UserSessionStateService UserSession
-@inject HttpClient Http
-@inject ILogsActionService logsActionService
-
+﻿
 @rendermode InteractiveServer
 
 <div class="profile-container">
@@ -13,7 +6,7 @@
         <div class="profile-i">
             <i class="fas fa-user"></i>
         </div>
-        <span class="profile-name text-uppercase">@UserSession.Name</span>
+        <span class="profile-name text-uppercase">@UserSession.UserName</span>
     </div>
 
     <button class="logout-btn" title="خروج" @onclick="Logout" @onclick:preventDefault>
@@ -73,19 +66,4 @@
         }
 </style>
 
-@code {
-    private async Task Logout()
-    {
-        var log = new LogActions
-        {
-            ActionType = ActionType.Logout,
-            ActionDate = DateTime.Now,
-            Description = $"Déconnexion en tant que {UserSession.Name}",
-        };
 
-        await logsActionService.settLog(log);
-        await Http.PostAsync("api/auth/logout", null);
-        UserSession.ClearUser();
-        NavigationManager.NavigateTo("/");
-    }
-}

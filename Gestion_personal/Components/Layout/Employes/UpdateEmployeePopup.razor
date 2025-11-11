@@ -1,8 +1,4 @@
-﻿@using GestionPersonnel.Services
-@using global::Services.Interfaces
-@inject IEmployeService EmployeService
-@inject IFonctionService FonctionService
-@inject UserSessionStateService UserSession
+﻿
 @if (IsVisibleUpdateEmploye)
 {
     <div class="modal show" tabindex="-1" style="display: block;">
@@ -92,7 +88,7 @@
 
                             <div class="form-group">
                                 <label for="SitiationFamiliale">Situation Familiale</label>
-                                    <select id="SitiationFamiliale" @bind="Employee.SitiationFamiliale" class="form-control" disabled="@IsDisabled" required>
+                                    <select id="SitiationFamiliale" @bind="Employee.SituationFamiliale" class="form-control" disabled="@IsDisabled" required>
                                     <option value="">-- Sélectionner --</option>
                                     <option value="Célibataire">Célibataire</option>
                                     <option value="Marié(e)">Marié(e)</option>

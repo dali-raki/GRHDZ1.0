@@ -1,0 +1,19 @@
+﻿namespace GrhDz.Domains.Models.Salaire
+{
+    public class SalaireModel
+    {
+        public int SalaireID { get; set; }
+        public int EmployeID { get; set; }
+        public string NomEmploye { get; set; }
+        public string PrenomEmploye { get; set; }
+        public string NomFonction { get; set; }
+        public string NomTypePaiement { get; set; }
+        public DateTime Mois { get; set; }
+        public decimal Salairee { get; set; }
+        public decimal Primes { get; set; }
+        public decimal Avances { get; set; }
+        public decimal Dettes { get; set; }
+        public decimal SalaireNet { get; set; }
+        public int TypePaiementID { get; set; }
+    }
+}

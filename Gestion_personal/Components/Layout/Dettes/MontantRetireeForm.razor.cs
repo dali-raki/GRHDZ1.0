@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
-using GestionPersonnel.Services;
+using GrhDz.Apps.Dettes;
+using Implementation.Services.Salaire;
 
 namespace Gestion_personal.Components.Layout.Dettes
 {
@@ -13,6 +14,7 @@ namespace Gestion_personal.Components.Layout.Dettes
         private DateTime? selectedDate = DateTime.Now; // To store the selected date
 
         private decimal montant; // To store the entered amount
+        [Inject] public ISalaireService SalaireService { get; set; }
 
 
         public void Show(int employeId)

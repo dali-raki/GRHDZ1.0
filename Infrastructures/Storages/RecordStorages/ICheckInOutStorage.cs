@@ -1,4 +1,4 @@
-﻿using Infrastructures.Domains.Models.CheckInOut;
+﻿using GrhDz.Domains.Models.CheckInOut;
 
 namespace Infrastructures.Storages.RecordStorages
 {

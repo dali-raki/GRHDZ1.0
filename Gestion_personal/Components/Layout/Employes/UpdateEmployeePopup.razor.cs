@@ -1,7 +1,11 @@
-﻿using GestionPersonnel.Models.Employe;
-using GestionPersonnel.Models.Fonctions;
-using Implementation.Services.Logs;
-using Infrastructures.Domains.Models.Logs;
+﻿using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Employees;
+using GrhDz.Domains.Models.Fonctions;
+using GrhDz.Domains.Models.Logs;
+using Implementation.Services.EmployeModel;
+using Implementation.Services.Fonctions;
+using Implementation.Services.LogsAction;
+using Implementation.Services.Users;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
@@ -12,10 +16,14 @@ public partial class UpdateEmployeePopup
     [Parameter] public bool IsVisibleUpdateEmploye { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<Employe> OnSave { get; set; }
-    [Parameter] public Employe Employee { get; set; } = new Employe();
+    [Parameter] public Employe Employee { get; set; } = new ();
     [Parameter] public bool showbtn { get; set; } = true;
     [Parameter] public bool IsDisabled { get; set; } = false;
     [Inject] private ILogsActionService logsActionService { get; set; }
+    [Inject] private IFonctionService fonctionService { get; set; }
+    [Inject] private UserSessionStateService userSession { get; set; }
+    [Inject] private IEmployeService    employeService{ get; set; }
+    private Result<List<Fonction>> fonctionsr;
     private List<Fonction> fonctions;
     private bool isSubmitting;
     private string errorMessage;
@@ -40,7 +48,8 @@ public partial class UpdateEmployeePopup
 
     public async Task LoadFonction()
     {
-        fonctions = await FonctionService.GetAllAsync();
+        fonctionsr = await fonctionService.GetAllAsync();
+        fonctions = fonctionsr.Value;
     }
 
     private async Task HandleSubmit()
@@ -49,15 +58,16 @@ public partial class UpdateEmployeePopup
         {
             if (isSubmitting) return;
             isSubmitting = true;
-            var log = new LogActions
+            var log = new LogAction
             {
                 ActionType = ActionType.Update,
                 ActionDate = DateTime.Now,
                 Description = "modifier Employe",
-                PerformedBy = UserSession.Name,        
+                PerformedBy = userSession.UserName,        
             };
-            await logsActionService.settLog(log);
-            await EmployeService.UpdateEmployeAsync(Employee);
+           
+            await employeService.UpdateEmployeAsync(Employee);
+             await logsActionService.settLog(log);
             await OnSave.InvokeAsync(Employee);
             await OnClose.InvokeAsync();
             Console.WriteLine("Update photo");

@@ -1,12 +1,13 @@
-﻿using GestionPersonnel.Models.Salaires;
+﻿using GrhDz.Domains.Models.Salaire;
+using GrhDz.Domains.Models.Salaires;
 using Microsoft.Extensions.Configuration;
-using System.Data.SqlClient;
 using System.Data;
+using System.Data.SqlClient;
 
-namespace GestionPersonnel.Storages.SalairesStorages
+namespace Infrastructures.Storages.SalairesStorages
 {
 
-    public class SalaireStorage
+    public class SalaireStorage : ISalaireStorage
     {
         private readonly string _connectionString;
 
@@ -21,9 +22,20 @@ namespace GestionPersonnel.Storages.SalairesStorages
         private const string _updateQuery = "UPDATE Salaires SET EmployeID = @EmployeID, Mois = @Mois, Salaire = @Salaire, Primes = @Primes, Avances = @Avances, Dettes = @Dettes, SalaireNet = @SalaireNet, TypePaiementID = @TypePaiementID WHERE SalaireID = @SalaireID;";
         private const string _deleteQuery = "DELETE FROM Salaires WHERE SalaireID = @SalaireID;";
         private const string _updateSalarireDetteQuery = "UPDATE Salaires SET Dettes = @Dettes WHERE EmployeID = @EmployeID AND Year(Mois)=Year(@Mois) And Month(Mois)=Month(@Mois);";
-        private static Salaire GetSalaireFromDataRow(DataRow row)
+        private const string selectsalairedetails = @"
+            SELECT TOP (1000)  s.SalaireID, s.Salaire, s.Primes, s.Avances,
+                s.Dettes, s.SalaireNet, e.Nom AS NomEmploye, e.Prenom AS PrenomEmploye, f.NomFonction,t.NomTypePaiement
+            FROM 
+                [db_aa9d4f_gestionpersonnel].[dbo].[Salaires] s
+            JOIN 
+                [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e ON s.EmployeID = e.EmployeID
+            JOIN 
+                [db_aa9d4f_gestionpersonnel].[dbo].[Fonctions] f ON e.FonctionID = f.FonctionID
+            JOIN 
+                [db_aa9d4f_gestionpersonnel].[dbo].[TypesDePaiement] t ON s.TypePaiementID = t.TypePaiementID";
+        private static SalaireModel GetSalaireFromDataRow(DataRow row)
         {
-            return new Salaire
+            return new SalaireModel
             {
                 SalaireID = (int)row["SalaireID"],
                 EmployeID = (int)row["EmployeID"],
@@ -37,7 +49,7 @@ namespace GestionPersonnel.Storages.SalairesStorages
             };
         }
 
-        public async Task<List<Salaire>> GetAll()
+        public async Task<List<SalaireModel>> GetAll()
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_selectAllQuery, connection);
@@ -51,7 +63,7 @@ namespace GestionPersonnel.Storages.SalairesStorages
             return (from DataRow row in dataTable.Rows select GetSalaireFromDataRow(row)).ToList();
         }
         
-        public async Task<Salaire?> GetById(int id)
+        public async Task<SalaireModel?> GetById(int id)
         {
             await using var connection = new SqlConnection(_connectionString);
 
@@ -67,7 +79,7 @@ namespace GestionPersonnel.Storages.SalairesStorages
             return dataTable.Rows.Count == 0 ? null : GetSalaireFromDataRow(dataTable.Rows[0]);
         }
 
-        public async Task Add(Salaire salaire)
+        public async Task Add(SalaireModel salaire)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_insertQuery, connection);
@@ -85,7 +97,7 @@ namespace GestionPersonnel.Storages.SalairesStorages
             salaire.SalaireID = Convert.ToInt32(id);
         }
 
-        public async Task Update(Salaire salaire)
+        public async Task Update(SalaireModel salaire)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_updateQuery, connection);
@@ -116,30 +128,11 @@ namespace GestionPersonnel.Storages.SalairesStorages
         {
             List<SalaireDetail> salaireDetailsList = new List<SalaireDetail>();
 
-            string query = @"
-            SELECT TOP (1000) 
-                s.SalaireID,
-                s.Salaire,
-                s.Primes,
-                s.Avances,
-                s.Dettes,
-                s.SalaireNet,
-                e.Nom AS NomEmploye,
-                e.Prenom AS PrenomEmploye,
-                f.NomFonction,
-                t.NomTypePaiement
-            FROM 
-                [db_aa9d4f_gestionpersonnel].[dbo].[Salaires] s
-            JOIN 
-                [db_aa9d4f_gestionpersonnel].[dbo].[Employes] e ON s.EmployeID = e.EmployeID
-            JOIN 
-                [db_aa9d4f_gestionpersonnel].[dbo].[Fonctions] f ON e.FonctionID = f.FonctionID
-            JOIN 
-                [db_aa9d4f_gestionpersonnel].[dbo].[TypesDePaiement] t ON s.TypePaiementID = t.TypePaiementID";
+       
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                SqlCommand command = new SqlCommand(query, connection);
+                SqlCommand command = new SqlCommand(selectsalairedetails, connection);
                 connection.Open();
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -169,43 +162,49 @@ namespace GestionPersonnel.Storages.SalairesStorages
         {
             var salaires = new List<SalaireDetail>();
 
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand("GetSalariesByMonth", connection))
+            await using(var connection = new SqlConnection(_connectionString))
+            await using (var command = new SqlCommand("GetSalariesByMonth", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@Mois", mois);
-
+                
                 await connection.OpenAsync();
 
-                using (var reader = await command.ExecuteReaderAsync())
+                await using (var reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
-                        salaires.Add(new SalaireDetail
-                        {
-                            EmployeId = Convert.ToInt32(reader["EmployeId"]),
-                            NomEmploye = reader["Nom"].ToString(),
-                            PrenomEmploye = reader["Prenom"].ToString(),
-                            NomFonction = reader["NomFonction"].ToString(),
-                            Salaire = reader["TotalJournee"] != DBNull.Value ? Convert.ToDecimal(reader["TotalJournee"]) : 0,
-                            Primes = reader["Primes"] != DBNull.Value ? Convert.ToDecimal(reader["Primes"]) : 0,
-                            Avances = reader["Avances"] != DBNull.Value ? Convert.ToDecimal(reader["Avances"]) : 0,
-                            Dettes = reader["Dettes"] != DBNull.Value ? Convert.ToDecimal(reader["Dettes"]) : 0,
-                            Refund = reader["Remboursements"] != DBNull.Value ? Convert.ToDecimal(reader["Remboursements"]) : 0,
-                            SalaireNet = reader["SalaireNet"] != DBNull.Value ? Convert.ToDecimal(reader["SalaireNet"]) : 0,
-                            Absence = reader["NbAbsence"] != DBNull.Value ? Convert.ToInt32(reader["NbAbsence"]) : 0,
-                            Presence = reader["NbPresence"] != DBNull.Value ? Convert.ToInt32(reader["NbPresence"]) : 0,
-
-
-                        });
+                        NewMethod(salaires, reader);
                     }
                 }
+                command.CommandTimeout = 120;
             }
 
             return salaires;
         }
 
-        public async Task UpdateDette(int employeeid, Decimal dette,DateTime mois)
+        private static void NewMethod(List<SalaireDetail> salaires, SqlDataReader reader)
+        {
+            salaires.Add(new SalaireDetail
+            {
+                EmployeId = Convert.ToInt32(reader["EmployeId"]),
+                NomEmploye = reader["Nom"].ToString(),
+                PrenomEmploye = reader["Prenom"].ToString(),
+                NomFonction = reader["NomFonction"].ToString(),
+                Salaire = reader["TotalJournee"] != DBNull.Value ? Convert.ToDecimal(reader["TotalJournee"]) : 0,
+                Primes = reader["Primes"] != DBNull.Value ? Convert.ToDecimal(reader["Primes"]) : 0,
+                Avances = reader["Avances"] != DBNull.Value ? Convert.ToDecimal(reader["Avances"]) : 0,
+                Dettes = reader["Dettes"] != DBNull.Value ? Convert.ToDecimal(reader["Dettes"]) : 0,
+                Refund = reader["Remboursements"] != DBNull.Value ? Convert.ToDecimal(reader["Remboursements"]) : 0,
+                SalaireNet = reader["SalaireNet"] != DBNull.Value ? Convert.ToDecimal(reader["SalaireNet"]) : 0,
+                Absence = reader["NbAbsence"] != DBNull.Value ? Convert.ToInt32(reader["NbAbsence"]) : 0,
+                Presence = reader["NbPresence"] != DBNull.Value ? Convert.ToInt32(reader["NbPresence"]) : 0,
+
+
+            });
+        }
+
+        public async Task UpdateDette(int employeeid, decimal dette,DateTime mois)
         {
             await using var connection = new SqlConnection(_connectionString);
             SqlCommand cmd = new(_updateSalarireDetteQuery, connection);
@@ -215,7 +214,7 @@ namespace GestionPersonnel.Storages.SalairesStorages
             connection.Open();
             await cmd.ExecuteNonQueryAsync();
         }
-        //this func get 1st day on this month and check if he exist in BD he dont insert else he ensert the salaires 
+        
         public async Task<int> InsertMonthlySalaries()
         {
             await using var connection = new SqlConnection(_connectionString);
@@ -224,7 +223,6 @@ namespace GestionPersonnel.Storages.SalairesStorages
                 CommandType = CommandType.StoredProcedure
             };
 
-            // The stored procedure uses RETURN to indicate status, so capture it
             var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
             returnParameter.Direction = ParameterDirection.ReturnValue;
 

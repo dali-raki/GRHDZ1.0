@@ -1,9 +1,4 @@
-﻿using GestionPersonnel.Models.Primes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GrhDz.Domains.Models.Primes;
 
 namespace Infrastructures.Storages.PrimesStorages
 {

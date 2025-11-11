@@ -1,6 +1,9 @@
-using GestionPersonnel.Models.Fonctions;
-using Implementation.Services.Logs;
-using Infrastructures.Domains.Models.Logs;
+using GrhDz.Apps.Shared;
+using GrhDz.Domains.Models.Fonctions;
+using GrhDz.Domains.Models.Logs;
+using Implementation.Services.Fonctions;
+using Implementation.Services.LogsAction;
+using Implementation.Services.Users;
 using Microsoft.AspNetCore.Components;
 
 namespace Gestion_personal.Components.Layout.Employes
@@ -12,7 +15,10 @@ namespace Gestion_personal.Components.Layout.Employes
         [Parameter] public EventCallback OnDelete { get; set; }
         [Parameter] public EventCallback<Fonction> OnSave { get; set; }
         [Inject] private ILogsActionService logsActionService { get; set; }
-        private List<Fonction> fonctions = new List<Fonction>();
+        [Inject] private IFonctionService fonctionService { get; set; }
+        [Inject] private UserSessionStateService userSession{ get; set; }
+        private List<Fonction> fonctions = new ();
+        private Result<List<Fonction>>  fonctionsr;
         private int selectedFonctionId;
         private string newFonctionName;
 
@@ -34,7 +40,7 @@ namespace Gestion_personal.Components.Layout.Employes
         {
             try
             {
-                fonctions = await FonctionService.GetAllAsync();
+                fonctionsr = await fonctionService.GetAllAsync();
             }
             catch (Exception ex)
             {
@@ -53,7 +59,7 @@ namespace Gestion_personal.Components.Layout.Employes
 
                     try
                     {
-                        await FonctionService.UpdateAsync(fonctionToUpdate);
+                        await fonctionService.UpdateAsync(fonctionToUpdate);
                         await OnSave.InvokeAsync(fonctionToUpdate);
                         await OnClose.InvokeAsync();
                     }
@@ -62,12 +68,12 @@ namespace Gestion_personal.Components.Layout.Employes
                         Console.WriteLine("Error updating fonction: " + ex.Message);
                     }
                 }
-                var log = new LogActions
+                var log = new LogAction
                 {
                     ActionType = ActionType.Update,
                     ActionDate = DateTime.Now,
                     Description = $"modifier fonction",
-                    PerformedBy = UserSession.Name,
+                    PerformedBy = userSession.UserName
                 };
                 await logsActionService.settLog(log);
             }
@@ -82,20 +88,21 @@ namespace Gestion_personal.Components.Layout.Employes
                 {
                     try
                     {
-                        await FonctionService.DeleteAsync(fonctionToDelete.FonctionID);
+                        await fonctionService.DeleteAsync(fonctionToDelete.FonctionID);
                         selectedFonctionId = 0;
                         await OnDelete.InvokeAsync();
-                        await OnClose.InvokeAsync();
+                       
                         await LoadFonctions();
-                        var log = new LogActions
+                        var log = new LogAction
                         {
                             ActionType = ActionType.Delete,
                             ActionDate = DateTime.Now,
                             Description = $"supprimer fonction",
-                            PerformedBy = UserSession.Name,
+                            PerformedBy = userSession.UserName
                             
                         };
                         await logsActionService.settLog(log);
+                        await OnClose.InvokeAsync();
                     }
                     catch (Exception ex)
                     {
