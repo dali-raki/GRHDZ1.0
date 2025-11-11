@@ -7,28 +7,6 @@
 @if (UserSession.Role == "Admin" || UserSession.Role == "Manager")
 {
     <div class="panel-employe">
-  @*   <div style="display:flex;align-items: flex-start;">
-        <button class="btn-p" @onclick="TransferPointageSalaire">
-            <i class="fa-solid fa-rotate"></i>
-        </button>
-    <div class="title">
-        <h1>Paiement</h1>
-    </div>
-    </div>
-    <div class="option-employe">
-        <div class="input-group w-50">
-
-            <input type="text" class="form-control" placeholder="Search" @bind="searchTerm" @oninput="SearchPaiement">
-            <input type="date" class="form-control" @bind="selectedDate" />
-                <button class="btn-p" type="button" @onclick="GetSalariesByMonth">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-        
-        </div>
-        <button class="btn-p" @onclick="Show_Popup_FicheAvanceModel">Fiche des AvanceModels</button>
-    </div> *@
-
-
         <div style="display: flex;justify-content: space-between;align-items: center;">
             <div style="display:flex;align-items: baseline;">
                 <div style="display: flex;align-items: center;justify-content: center;background-color: #2563eb ;padding:10px;border-radius: 7px;color:white;">
@@ -162,8 +140,8 @@
 
     </div>
 </div>
-<PaimentAvanceDettePopUp @ref="paimentAvanceDettePopUp" OnSaved="RefreshGrid" />
-<FiceAvance IsVisibleFicheAvance="@isVisibleFicheAvance" OnClose="@Hide_Popup_FicheAvance" />
+    <PaimentAvanceDettePopUp @ref="paimentAvanceDettePopUp" OnSaved="RefreshGrid" />
+    <FiceAvance IsVisibleFicheAvance="@isVisibleFicheAvance" OnClose="@Hide_Popup_FicheAvance" />
     <DetteAvanceEmployeFrom IsVisibleFicheAvanceDette="@isVisibleFicheAvanceDette" OnClose="@Hide_Popup_FicheAvanceDette" EmployeID="@SelectedEmployeID" Date="selectedDate.Value" />
     <SuccessPopup data="@datapop" />
 

@@ -92,40 +92,76 @@
                             </div>
                         }
         </RadzenTabsItem>
-                        <RadzenTabsItem Text="Remboursements">
+        <RadzenTabsItem Text="Primes">
 
-                        @if (remboursements != null && remboursements.Value.Count > 0)
+           @if (primes != null && primes.Value.Count > 0)
+            {
+                                var totalDette = primes.Value.Sum(d => d.Montant);
+                <div style="overflow-y: auto; max-height: 200px;">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Montant</th>
+                            <th>Description</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                                            @foreach (var remboursement in primes.Value)
                         {
-                            var totalDette = remboursements.Value.Sum(d => d.Montant);
-                            <div style="overflow-y: auto; max-height: 200px;">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Montant</th>
-                                            <th>Description</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var remboursement in remboursements.Value)
-                                        {
-                                            <tr>
-                                                <td>@remboursement.Date.ToString("yyyy-MM-dd")</td>
-                                                <td>@remboursement.Montant</td>
-                                                <td>@remboursement.Description</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <td><strong>Total</strong></td>
-                                            <td><strong>@totalDette</strong></td>
-                                            <td><strong></strong></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
+                            <tr>
+                                <td>@remboursement.Date.ToString("yyyy-MM-dd")</td>
+                                <td>@remboursement.Montant</td>
+                                <td>@remboursement.Description</td>
+                            </tr>
                         }
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td><strong>@totalDette</strong></td>
+                            <td><strong></strong></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </RadzenTabsItem>
+        
+        <RadzenTabsItem Text="Remboursements">
+
+            @if (remboursements != null && remboursements.Value.Count > 0)
+            {
+                var totalDette = remboursements.Value.Sum(d => d.Montant);
+                <div style="overflow-y: auto; max-height: 200px;">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Montant</th>
+                            <th>Description</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var remboursement in remboursements.Value)
+                        {
+                            <tr>
+                                <td>@remboursement.Date.ToString("yyyy-MM-dd")</td>
+                                <td>@remboursement.Montant</td>
+                                <td>@remboursement.Description</td>
+                            </tr>
+                        }
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td><strong>@totalDette</strong></td>
+                            <td><strong></strong></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
         </RadzenTabsItem>
     </Tabs>
 </RadzenTabs>

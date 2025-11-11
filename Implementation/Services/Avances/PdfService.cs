@@ -51,8 +51,8 @@ public class PdfService : IPdfService
             isAlternate = !isAlternate;
 
             DrawTableCell(gfx, xPosition, yPosition, columnWidths[0], avance.AvanceID.ToString(), font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
-            //  DrawTableCell(gfx, xPosition + columnWidths[0], yPosition, columnWidths[1], avance.NomEmployee, font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
-            //  DrawTableCell(gfx, xPosition + columnWidths[0] + columnWidths[1], yPosition, columnWidths[2], avance.PrenomEmployee, font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
+            DrawTableCell(gfx, xPosition + columnWidths[0], yPosition, columnWidths[1], avance.NomEmployee, font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
+            DrawTableCell(gfx, xPosition + columnWidths[0] + columnWidths[1], yPosition, columnWidths[2], avance.PrenomEmployee, font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
             DrawTableCell(gfx, xPosition + columnWidths[0] + columnWidths[1] + columnWidths[2], yPosition, columnWidths[3], $"{avance.Montant:0.00} DA", font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
             DrawTableCell(gfx, xPosition + columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], yPosition, columnWidths[4], avance.Date.ToString("dd/MM/yyyy"), font, XBrushes.Black, backgroundBrush, XBrushes.LightGray);
 

@@ -61,9 +61,10 @@ public partial class EmployePage
     }
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(UserSession.UserId.ToString()))
+        if (string.IsNullOrEmpty(UserSession.UserId))
         {
             Nav.NavigateTo("/", forceLoad: true);
+            return;
         }
         await LoadEmployees();
     }
@@ -195,7 +196,7 @@ public partial class EmployePage
             Photo = employee.Photo,
             Journee = employee.Journee
         };
-        isEditPopupVisible = true;
+        isDisplayPopupVisible = true;
     }
 
     private void Show_Popup_DisplayEmploye(Employe employee)
@@ -239,8 +240,8 @@ public partial class EmployePage
 
     private async Task HandlePopupResponse()
     {
-        confirmationPopup.Show();
-        await EmployeService.SetEmployeAsync(employeeToDelete,EmployeeStatus.Blocked);
+        isConfirmVisible = true;
+         await EmployeService.SetEmployeAsync(employeeToDelete,EmployeeStatus.Blocked);
         LoadEmployees();
         ShowSuccessPopup();
     }
@@ -286,25 +287,25 @@ public partial class EmployePage
         await transferDataStorage.TransfererEmployees();
         await LoadEmployees();
     }
-    private void ConfirmDelete(int employeID)
-    {
-        confirmationPopup.Show();
-        employeeToDelete = employeID;
-    }
-    private void ConfirmReturn(int employeID)
-    {
-        confirmationPopup.Show();
-        employeeToReturn = employeID;
-    }
-
-
 
     private async Task HandlePopupResponse2()
     {
-        confirmationPopup2.Show();
-        await EmployeService.SetEmployeAsync(employeeToReturn,EmployeeStatus.Active);
+        isConfirmVisible2 = true;
+         await EmployeService.SetEmployeAsync(employeeToReturn,EmployeeStatus.Active);
         successTost.Show();
         LoadEmployees();
+    }
+
+    private void ConfirmDelete(int employeID)
+    {
+        employeeToDelete = employeID;
+        confirmationPopup.Show();
+    }
+
+    private void ConfirmReturn(int employeID)
+    {
+        employeeToReturn = employeID;
+        confirmationPopup2.Show();
     }
 
 }

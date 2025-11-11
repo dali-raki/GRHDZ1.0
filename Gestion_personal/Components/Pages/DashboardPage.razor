@@ -102,35 +102,8 @@
                         </div>
                     </RadzenTabsItem>
                    
-                @if (UserSession.Role == "Admin")
-                {
-
-                        <RadzenTabsItem Text="Trace Des opérations">
-                        <div class="option-employe mb-5">
-                            <div class="input-group w-25">
-                                    <input type="text" class="form-control" placeholder="Search" @bind-value="searchTerm" @bind-value:event="oninput" />
-                                <button class="btn-p" type="button">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <RadzenDataGrid @ref="grid2" Data="@FilteredLogs" TItem="LogAction"
-                                        ShowPagingSummary="true" PageSize="10"
-                                        AllowPaging="true" AllowSorting="true">
-                            <Columns>
-                                    <RadzenDataGridColumn TItem="LogAction" Property="ActionType" Title="Action" Width="120px" Filterable=false />
-                                    <RadzenDataGridColumn TItem="LogAction" Property="PerformedBy" Title="User" Width="150px" Filterable=false />
-                                    <RadzenDataGridColumn TItem="LogAction" Property="Description" Title="Description" Filterable=false />
-                                <RadzenDataGridColumn TItem="LogAction" Property="ActionDate" Title="Date"
-                                                          Width="180px" Filterable=false>
-                                    <Template Context="log">
-                                        @log.ActionDate.ToString("yyyy-MM-dd HH:mm")
-                                    </Template>
-                                </RadzenDataGridColumn>
-                            </Columns>
-                        </RadzenDataGrid>
-                    </RadzenTabsItem>
-                }
+               
+                
         </Tabs>
     </RadzenTabs>
  </RadzenCard>

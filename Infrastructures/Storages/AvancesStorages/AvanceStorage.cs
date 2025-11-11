@@ -21,9 +21,20 @@ namespace Infrastructures.Storages.AvancesStorages
         private const string SelectByDate = "SELECT * FROM Avances WHERE Date=@Date";
         private const string SelectTotaleAvances = "SELECT SUM(Montant)  FROM Avances WHERE YEAR(Date) = YEAR(@Date) AND MONTH(Date) = MONTH(@Date);";
         private const string SelectAvacebyDate = @"
-        SELECT  a.AvanceID, a.EmployeID, e.Nom,e.Prenom, a.Montant, a.Date FROM Avances] a
-        INNER JOIN  [Employes] e ON   a.EmployeID = e.EmployeID  WHERE 
-        YEAR(a.Date) = YEAR(@Date) AND MONTH(a.Date) = MONTH(@Date) ORDER BY  a.Date DESC;"; 
+       SELECT 
+    a.AvanceID, 
+    a.EmployeID, 
+    e.Nom, 
+    e.Prenom, 
+    a.Montant, 
+    a.Date,
+    a.Description
+FROM Avances a
+INNER JOIN Employes e 
+    ON a.EmployeID = e.EmployeID
+WHERE a.Date >= DATEFROMPARTS(YEAR(@SelectedDate), MONTH(@SelectedDate), 1)
+  AND a.Date < DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(@SelectedDate), MONTH(@SelectedDate), 1))
+ORDER BY a.Date DESC;"; 
 
 
         private static AvanceModel GetAvanceFromDataRow(DataRow row)
@@ -192,7 +203,7 @@ namespace Infrastructures.Storages.AvancesStorages
            await using var cmd = new SqlCommand(SelectAvacebyDate, connection);
 
             // Add the specific date parameter to the query
-            cmd.Parameters.AddWithValue("@Date", specificDate);
+            cmd.Parameters.AddWithValue("@SelectedDate", specificDate);
 
             var dataTable = new DataTable();
             var da = new SqlDataAdapter(cmd);

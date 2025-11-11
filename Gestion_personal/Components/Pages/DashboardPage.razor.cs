@@ -51,7 +51,6 @@ namespace Gestion_personal.Components.Pages
         private Result<List<Employe>> employees;
         private List<Employe> filteredEmployees;
 
-        private RadzenDataGrid<LogAction> grid2;
         private List<LogAction> logs = new();
         private string searchTerm3 = string.Empty;
         int selectedIndex = 0;
@@ -168,15 +167,7 @@ namespace Gestion_personal.Components.Pages
             filteredPointage = filteredPointageResult.Value;
             await grid.Reload();
         }
-        private IEnumerable<LogAction> FilteredLogs => logs
-          .Where(log =>
-              string.IsNullOrWhiteSpace(searchTerm) ||
-              log.PerformedBy.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-              log.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-              log.ActionType.ToString().Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-          .OrderByDescending(log => log.ActionDate);
-
-
+     
     }
 
 

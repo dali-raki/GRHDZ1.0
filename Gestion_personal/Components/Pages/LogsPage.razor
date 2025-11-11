@@ -1,0 +1,48 @@
+﻿@page "/logs"
+@rendermode InteractiveServer
+
+@if (UserSession.Role == "Admin")
+{
+    <div style="display: flex;justify-content: space-between;align-items: center;">
+        <div style="display:flex;align-items: baseline;">
+            <div style="display: flex;align-items: center;justify-content: center;background-color: #2563eb ;padding:10px;border-radius: 7px;color:white;">
+                <span class="fa-solid fa-user-tie" style="font-size:22px" aria-hidden="true"></span>
+            </div>
+            <div class="title">
+                <h1>Logs</h1>
+            </div>
+        </div>
+        <div>
+            <div class="option-employe">
+
+
+               
+            </div>
+        </div>
+    </div>
+
+    <div class="option-employe mb-5">
+        <div class="input-group w-25">
+            <input type="text" class="form-control" placeholder="Search" @bind-value="searchTerm" @bind-value:event="oninput" />
+            <button class="btn-p" type="button">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </div>
+    </div>
+    <RadzenDataGrid @ref="grid" Data="@FilteredLogs" TItem="LogAction"
+                    ShowPagingSummary="true" PageSize="10"
+                    AllowPaging="true" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="LogAction" Property="ActionType" Title="Action" Width="120px" Filterable=false />
+            <RadzenDataGridColumn TItem="LogAction" Property="PerformedBy" Title="User" Width="150px" Filterable=false />
+            <RadzenDataGridColumn TItem="LogAction" Property="Description" Title="Description" Filterable=false />
+            <RadzenDataGridColumn TItem="LogAction" Property="ActionDate" Title="Date"
+                                  Width="180px" Filterable=false>
+                <Template Context="log">
+                    @log.ActionDate.ToString("yyyy-MM-dd HH:mm")
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+}

@@ -72,12 +72,7 @@
 
                                </Template>
                            </RadzenDataGridColumn>
-                         @*   <<RadzenPager ShowPagingSummary="true" PagingSummaryFormat="@pagingSummaryFormat"
-                                         HorizontalAlign="HorizontalAlign.Right"
-                                         Count="count"
-                                         PageSize="@pageSize" 
-                                         PageNumbersCount="5" 
-                                         PageChanged="@PageChanged" /> *@
+                        
 
                        </Columns>
                        <EmptyTemplate>
@@ -140,10 +135,8 @@
                         </div>
                         <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" showbtn=false IsDisabled=true OnClose="@Hide_Popup_UpdateEmploye" />
                         <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" showbtn=false IsDisabled=false OnClose="@Hide_Popup_ShowEmploye" />
-                              
-                        <ConfirmationPopup @ref="confirmationPopup" OnConfirmation="HandlePopupResponse" Title="Confirmation" objective="Supprimer" />
-                        <ConfirmationPopup @ref="confirmationPopup2" OnConfirmation="HandlePopupResponse2" Title="Confirmation" objective="Renvoyer" />
-                        <!--Tab2end-->
+
+         
                  
            </RadzenTabsItem>
        </Tabs>
@@ -162,7 +155,15 @@
     <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_UpdateEmploye" OnSave="@HandleEditSave" />
     <UpdateEmployeePopup IsVisibleUpdateEmploye="@isDisplayPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_DisplayEmploye" OnSave="@HandleEditSave" showbtn="false" IsDisabled="true"/>
 
-    @*<ConfirmationPopup IsVisibleConfirm="isConfirmVisible" @ref="confirmationPopup2" OnConfirmation="HandlePopupResponse" Title="Confirmation" />*@
+    <ConfirmationPopup @ref="confirmationPopup"
+                       OnConfirmation="HandlePopupResponse"
+                       Title="Confirmation"
+                       objective="Supprimer" />
+
+    <ConfirmationPopup @ref="confirmationPopup2"
+                       OnConfirmation="HandlePopupResponse2"
+                       Title="Confirmation"
+                       objective="Renvoyer" />
 </div>
 
 <style>

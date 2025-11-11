@@ -24,5 +24,17 @@ namespace Implementation.Services.Primes
             }
         }
 
+        public async Task<Result<List<PrimeType>>> GetByEmployeIdInMonth(int employeId, DateTime selectedMonth)
+        {
+            try
+            {
+                var Primes = await primeStorage.SelectByEmployeIdInMonth(employeId, selectedMonth);
+                return Primes;
+            }
+            catch (Exception ex)
+            {
+                return Error.Exception(ex);
+            }
+        }
     }
 }

@@ -45,8 +45,6 @@ namespace Infrastructures.Storages.RemboursementsStorages
 
         public async Task<List<RemboursementType>> GetByEmployeIdInMonth(int employeId, DateTime selectedMonth)
         {
-            if (employeId <= 0)
-                throw new ArgumentException("Invalid employee ID.", nameof(employeId));
 
             var remboursements = new List<RemboursementType>();
 
