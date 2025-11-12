@@ -21,6 +21,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{6A44E595-CF0
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrhDz.Apps", "GrhDz.Apps\GrhDz.Apps.csproj", "{38A28241-CEB8-4F6F-902C-E9B0BBBE0D1D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DbScript", "DbScript", "{BD126CCA-3E6E-4057-9AD7-C9171D5D029E}"
+	ProjectSection(SolutionItems) = preProject
+		GestionHr.sql = GestionHr.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

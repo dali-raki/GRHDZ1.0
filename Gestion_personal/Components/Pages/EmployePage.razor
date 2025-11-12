@@ -154,7 +154,7 @@
    <AddFonctionPopup IsVisibleAddFunction="@isVisibleAddFunction" OnClose="@Hide_Popup_AddFunction" OnSave="@HandleFonctionSave" />
         <ModifierFonctionPopup IsVisibleUpdateFunction="@isVisibleUpdFunction" OnClose="@Hide_Popup_UpdateFunction" OnSave="@HandleModifyFonctionSave" OnDelete="HandleDeleteFonction" />
         <SuccessPopup data="@datapop" @ref="successTost" />
-    <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_UpdateEmploye" OnSave="@HandleEditSave" />
+    <UpdateEmployeePopup IsVisibleUpdateEmploye="@isEditPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_UpdateEmploye" OnSave="@HandleEditSave" IsDisabled="true" showbtn="true" />
     <UpdateEmployeePopup IsVisibleUpdateEmploye="@isDisplayPopupVisible" Employee="@selectedEmployee" OnClose="@Hide_Popup_DisplayEmploye" OnSave="@HandleEditSave" showbtn="false" IsDisabled="true"/>
 
     <ConfirmationPopup @ref="confirmationPopup"
