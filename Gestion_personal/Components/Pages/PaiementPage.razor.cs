@@ -80,7 +80,7 @@ public partial class PaiementPage
     private void Hide_Popup_Paiement()
     {
         IsPopupVisible = false;
-        StateHasChanged(); // Ensure the UI updates when hiding the popup
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
@@ -92,10 +92,8 @@ public partial class PaiementPage
         var today = DateTime.Today;
         var lastDayOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
 
-        if (today == lastDayOfMonth)
-        {
-            await detteService.UpdateMonthlySalariesAsync();
-        }
+        await detteService.UpdateMonthlySalariesAsync();
+
         await SalaireService.SetMonthlySalariesAsync();
         salaireDetails = await SalaireService.GetSalariesByMonthAsync(selectedDate.Value);
         filteredSalaries = salaireDetails.Value;

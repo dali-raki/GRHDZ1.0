@@ -36,6 +36,8 @@ namespace Gestion_personal.Components.Pages
         public Result<decimal> Totale_Dargent;
         public decimal Total_Dette;
         public decimal Total_Avance;
+        public Result<decimal> Total_Detter;
+        public Result<decimal> Total_Avancer;
         private string searchTerm = string.Empty;
         private DateTime selectedDate = DateTime.Today;
         private RadzenDataGrid<DashboardPointage> grid;
@@ -96,9 +98,11 @@ namespace Gestion_personal.Components.Pages
             Total_Number_Employe_r = await EmployeService.GetTotaleNumberOfEmployeAsync();
             Total_Number_Employe = Total_Number_Employe_r.Value;
             Totale_Dargent = await EmployeService.GetTotaleSalaryForMonthAsync(DateTime.Now);
-            //Total_Dette = await DetteService.GetTotalDettesAsync();
-            //Total_Avance = await AvanceService.GetTotaleAsync(DateTime.Now);
-            //Dashboards = await DashboardService.GetDashboard();
+            Total_Detter = await DetteService.GetTotalDettesAsync();
+            Total_Dette = Total_Detter.Value;
+            Total_Avancer = await AvanceService.GetTotaleAsync(DateTime.Now);
+            Total_Avance = Total_Avancer.Value;
+            Dashboards = await DashboardService.GetDashboard();
             countfunctionr = await EmployeService.GetEmployeesCountByFunction();
             countfunction = countfunctionr.Value;
             presenceComparison = await DashboardService.GetPresenceComparisonAsync();

@@ -97,41 +97,51 @@ FROM Equipes";
 
 
         private const string _getDetteByYearQuery = @"
-            ;WITH Months AS (
-                SELECT 1 AS MonthNumber UNION ALL
-                SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL
-                SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL
-                SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL
-                SELECT 11 UNION ALL SELECT 12
-            )
-            SELECT 
-                m.MonthNumber,
-                DATENAME(MONTH, DATEFROMPARTS(@SelectedYear, m.MonthNumber, 1)) AS MonthName,
-                ISNULL(SUM(d.Montant), 0) AS TotalDette
-            FROM Months m
-            LEFT JOIN [dbo].[Dettes] d
-                ON MONTH(d.[Date]) = m.MonthNumber
-                AND YEAR(d.[Date]) = @SelectedYear
-            GROUP BY m.MonthNumber
-            ORDER BY m.MonthNumber;
-        ";
+;WITH Months AS (
+    SELECT 1 AS MonthNumber UNION ALL
+    SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL
+    SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL
+    SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL
+    SELECT 11 UNION ALL SELECT 12
+)
+SELECT 
+    @SelectedYear AS Year,
+    m.MonthNumber AS Month,
+    ISNULL(SUM(d.Montant), 0) AS Dette,
+    ISNULL(SUM(a.Montant), 0) AS Avance
+FROM Months m
+LEFT JOIN [dbo].[Dettes] d
+    ON MONTH(d.[Date]) = m.MonthNumber
+    AND YEAR(d.[Date]) = @SelectedYear
+LEFT JOIN [dbo].[Avances] a
+    ON MONTH(a.[Date]) = m.MonthNumber
+    AND YEAR(a.[Date]) = @SelectedYear
+GROUP BY m.MonthNumber
+ORDER BY m.MonthNumber;
+";
 
 
         public async Task<List<DashboardModel>> GetDashboardDataAsync()
         {
-            List<DashboardModel> dashboards = new List<DashboardModel>();
+            var dashboards = new List<DashboardModel>();
 
-            await using SqlConnection conn = new SqlConnection(_connectionString);
+            await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            await using SqlCommand cmd = new SqlCommand(_getDetteByYearQuery, conn);
-            cmd.CommandType = CommandType.StoredProcedure;
-            SqlDataReader reader = await cmd.ExecuteReaderAsync();
+            await using var cmd = new SqlCommand(_getDetteByYearQuery, conn);
+            cmd.CommandType = CommandType.Text;
+            cmd.Parameters.AddWithValue("@SelectedYear", DateTime.Now.Year);
 
+            using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-
-                dashboards.Add(getDashboardModelFromReader(reader));
+                dashboards.Add(new DashboardModel
+                {
+                    Year = reader.GetInt32(reader.GetOrdinal("Year")),
+                    Month = reader.GetInt32(reader.GetOrdinal("Month")),
+                    Dette = reader.GetDecimal(reader.GetOrdinal("Dette")),
+                    Avance = reader.GetDecimal(reader.GetOrdinal("Avance"))
+                });
             }
 
             return dashboards;
