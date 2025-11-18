@@ -106,30 +106,30 @@
     <SuccessPopup data="@datapop" />
 
 
-@if (showFileInput)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
+    @if (showFileInput)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">Télécharger Pointage</h5>
-                      </div>
+                    <div class="modal-header">
+                        <h5 class="modal-title">Télécharger Pointage</h5>
+                    </div>
 
-                <div class="modal-body">
-                    <EditForm EditContext="editContext" OnValidSubmit="UploadRecord" FormName="FileUploadForm">
-                        <InputFile OnChange="OnInputFileChange" accept=".data,.datafile" class="form-control" />
-                        <div class="modal-footer">
-                            <button type="button" class="btn-c" @onclick="CloseModal">Annuler</button>
-                            <button type="submit" class="btn-p" form="FileUploadForm" @onclick="UploadRecord">Télécharger</button>                          
-                        </div>
+                    <div class="modal-body">
+                        <EditForm EditContext="editContext" OnValidSubmit="UploadRecord" FormName="FileUploadForm">
+                            <InputFile OnChange="OnInputFileChange" accept=".data,.datafile" class="form-control" />
+                            <div class="modal-footer">
+                                <button type="button" class="btn-c" @onclick="CloseModal">Annuler</button>
+                                <button type="submit" class="btn-p" form="FileUploadForm" @onclick="UploadRecord">Télécharger</button>                          
+                            </div>
 
-                    </EditForm>
-                </div>
+                        </EditForm>
+                    </div>
 
              
+                </div>
             </div>
         </div>
-    </div>
-}
+    }
 }

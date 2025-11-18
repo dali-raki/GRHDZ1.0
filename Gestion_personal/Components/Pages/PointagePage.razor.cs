@@ -81,7 +81,7 @@ public partial class PointagePage
             ShowToast("Succès", "Fichier téléchargé avec succès!", ToastType.Success);
             selectedFile = null;
             showFileInput = false;
-           
+
         }
         catch (Exception ex)
         {
@@ -89,7 +89,7 @@ public partial class PointagePage
             ShowToast("Erreur", $"Il y a une erreur de fichier.", ToastType.Danger);
             selectedFile = null;
             showFileInput = false;
-            
+
         }
     }
 

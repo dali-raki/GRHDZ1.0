@@ -153,7 +153,7 @@ ORDER BY
             cmd.Parameters.AddWithValue("@FonctionID", employe.FonctionID);
             cmd.Parameters.AddWithValue("@DateEntree", employe.DateEntree);
             cmd.Parameters.AddWithValue("@DateSortie", employe.DateSortie ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SitiationFamiliale", employe.SituationFamiliale);
+            cmd.Parameters.AddWithValue("@SituationFamiliale", employe.SituationFamiliale);
             cmd.Parameters.AddWithValue("@Photo", employe.Photo ?? (object)DBNull.Value);
 
             await connection.OpenAsync();
